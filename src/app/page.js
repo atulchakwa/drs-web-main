@@ -123,8 +123,8 @@ export default function Home() {
 
               {/* Floating Metric Badges */}
               <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                animate={{ y: [0, 10, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute top-12 -left-8 bg-white/90 backdrop-blur-xl p-5 rounded-3xl shadow-2xl border border-white/50 z-20"
               >
                 <div className="flex gap-1 text-amber-400 mb-2">
@@ -179,8 +179,8 @@ export default function Home() {
                     { id: '02', title: 'Detailed Consultations', text: 'We allocate 20+ minutes per patient to ensure an accurate diagnosis and comprehensive understanding.' },
                     { id: '03', title: 'Direct Follow-ups', text: 'Communicate directly with our medical staff via WhatsApp for post-visit queries and reports.' }
                   ].map(item => (
-                    <div key={item.id} className="flex gap-5 group">
-                      <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-primary-600 shrink-0 font-black group-hover:bg-primary-600 group-hover:text-white transition-all transform group-hover:scale-110">
+                    <div key={item.id} className="flex gap-6 group items-start">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white shadow-lg border border-slate-100 flex items-center justify-center text-primary-600 shrink-0 text-xl sm:text-2xl font-black group-hover:bg-primary-600 group-hover:text-white transition-all transform group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-primary-100/50">
                         {item.id}
                       </div>
                       <div>

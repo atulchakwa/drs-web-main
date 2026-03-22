@@ -103,7 +103,7 @@ export default function ServicesGrid() {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, margin: "-100px" }}
-                className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+                className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10"
             >
                 {services.map((service, idx) => {
                     const Icon = service.icon;
@@ -115,7 +115,7 @@ export default function ServicesGrid() {
                             className="bg-white rounded-3xl p-8 border border-slate-100 hover:border-primary-100 hover:shadow-2xl hover:shadow-primary-900/10 transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col h-full"
                         >
                             {/* Number background */}
-                            <div className="absolute top-4 right-6 text-slate-100 font-black text-6xl group-hover:text-primary-50 transition-colors duration-500 z-0">
+                            <div className="absolute top-4 right-8 text-slate-400 font-black text-6xl sm:text-7xl group-hover:text-primary-50 transition-colors duration-500 z-0 select-none opacity-50">
                                 0{idx + 1}
                             </div>
 

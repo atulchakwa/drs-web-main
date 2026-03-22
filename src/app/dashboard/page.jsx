@@ -11,24 +11,29 @@ import {
 
 const STATUS_STYLES = {
     pending: {
-        bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200",
-        icon: <Clock className="w-3.5 h-3.5 mr-1.5" />
+        bg: "bg-amber-50/80", text: "text-amber-700", border: "border-amber-200/50",
+        icon: <Clock className="w-3.5 h-3.5 mr-1.5" />,
+        dot: "bg-amber-400"
     },
     confirmed: {
-        bg: "bg-accent-50", text: "text-accent-700", border: "border-accent-200",
-        icon: <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+        bg: "bg-emerald-50/80", text: "text-emerald-700", border: "border-emerald-200/50",
+        icon: <CheckCircle className="w-3.5 h-3.5 mr-1.5" />,
+        dot: "bg-emerald-400"
     },
     completed: {
-        bg: "bg-primary-50", text: "text-primary-700", border: "border-primary-200",
-        icon: <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+        bg: "bg-primary-50/80", text: "text-primary-700", border: "border-primary-200/50",
+        icon: <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />,
+        dot: "bg-primary-400"
     },
     cancelled: {
-        bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200",
-        icon: <XCircle className="w-3.5 h-3.5 mr-1.5" />
+        bg: "bg-rose-50/80", text: "text-rose-700", border: "border-rose-200/50",
+        icon: <XCircle className="w-3.5 h-3.5 mr-1.5" />,
+        dot: "bg-rose-400"
     },
     "no-show": {
-        bg: "bg-slate-50", text: "text-secondary/70", border: "border-slate-200",
-        icon: <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
+        bg: "bg-slate-50/80", text: "text-secondary/70", border: "border-slate-200/50",
+        icon: <AlertCircle className="w-3.5 h-3.5 mr-1.5" />,
+        dot: "bg-slate-400"
     }
 };
 
@@ -136,9 +141,9 @@ export default function DashboardPage() {
     const getStatusBadge = (status) => {
         const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
         return (
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${style.bg} ${style.text} ${style.border} shadow-sm transition-all hover:shadow-md`}>
-                {style.icon}
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+            <span className={`inline-flex items-center px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border ${style.bg} ${style.text} ${style.border} shadow-sm backdrop-blur-md transition-all`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${style.dot} mr-2 animate-pulse`}></span>
+                {status}
             </span>
         );
     };
@@ -172,25 +177,34 @@ export default function DashboardPage() {
             </AnimatePresence>
 
             {/* Top Navigation */}
-            <nav className="sticky top-0 z-40 glass shadow-sm">
+            <nav className="sticky top-0 z-40 bg-white/70 backdrop-blur-2xl border-b border-slate-200/50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16 items-center">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-gradient-to-br from-primary-500 to-primary-600 p-2 rounded-xl shadow-md shadow-primary-200">
-                                <Activity className="w-5 h-5 text-white" />
-                            </div>
-                            <h1 className="text-xl font-black text-secondary tracking-tight">
-                                Clinic <span className="text-primary-600">Admin</span>
-                            </h1>
+                    <div className="flex justify-between h-20 items-center">
+                        <div className="flex items-center gap-6">
+                            <Link href="/" className="flex items-center gap-3 group">
+                                <div className="bg-gradient-to-br from-primary-600 to-primary-700 p-2.5 rounded-2xl shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform">
+                                    <Activity className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="hidden sm:block">
+                                    <h1 className="text-xl font-black text-secondary tracking-tighter leading-none">
+                                        Clinic <span className="text-primary-600">Admin</span>
+                                    </h1>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Management Portal</p>
+                                </div>
+                            </Link>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="hidden md:flex items-center gap-2 px-4 py-1.5 bg-slate-100/50 rounded-full border border-slate-200">
-                                <User className="w-4 h-4 text-slate-500" />
-                                <span className="text-xs font-bold text-slate-600">{user?.email}</span>
+
+                        <div className="flex items-center gap-6">
+                            <div className="hidden md:flex flex-col items-end">
+                                <span className="text-xs font-black text-secondary">{user?.email?.split('@')[0]}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user?.email}</span>
                             </div>
+
+                            <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
+
                             <button
                                 onClick={handleLogout}
-                                className="flex items-center gap-2 text-xs font-black text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors uppercase tracking-wider"
+                                className="flex items-center gap-2.5 px-5 py-2.5 bg-rose-50 text-rose-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95"
                             >
                                 <LogOut className="w-4 h-4" />
                                 <span className="hidden sm:inline">Logout</span>
@@ -208,192 +222,153 @@ export default function DashboardPage() {
                     animate="visible"
                     className="grid grid-cols-1 lg:grid-cols-12 gap-8"
                 >
-                    {/* Main Content Area - Table/Cards */}
+                    {/* Main Content Area - Appointments */}
                     <div className="lg:col-span-8 xl:col-span-9 space-y-6">
-                        <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-2xl font-bold text-secondary">Appointments</h2>
+                                <span className="bg-primary-100 text-primary-700 text-xs font-black px-3 py-1 rounded-full">
+                                    {appointments.length} Total
+                                </span>
+                            </div>
+                            <div className="flex flex-wrap gap-3">
+                                <select
+                                    value={filter.status}
+                                    onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+                                    className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-primary-500/20 outline-none cursor-pointer appearance-none transition-all"
+                                >
+                                    <option value="">All Statuses</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <input
+                                    type="date"
+                                    value={filter.date}
+                                    onChange={(e) => setFilter({ ...filter, date: e.target.value })}
+                                    className="px-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-primary-500/20 outline-none cursor-pointer"
+                                />
+                            </div>
+                        </div>
 
-                            {/* Table Header & Filters */}
-                            <div className="p-5 border-b border-slate-100 bg-white flex flex-wrap gap-4 items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <h2 className="text-lg font-bold text-secondary">Appointments</h2>
-                                    <span className="bg-primary-100 text-primary-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {appointments.length}
-                                    </span>
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-32 bg-white/50 rounded-[2.5rem] border-2 border-dashed border-slate-200">
+                                <div className="w-12 h-12 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
+                                <p className="mt-6 text-sm font-black text-slate-400 uppercase tracking-widest animate-pulse">Synchronizing Records...</p>
+                            </div>
+                        ) : appointments.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-32 bg-white/50 rounded-[2.5rem] border-2 border-dashed border-slate-200 text-center px-6">
+                                <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8 rotate-12 transition-transform hover:rotate-0 border border-slate-50">
+                                    <Calendar className="w-10 h-10 text-slate-200" />
                                 </div>
-                                <div className="flex flex-wrap gap-3">
-                                    <div className="relative">
-                                        <select
-                                            value={filter.status}
-                                            onChange={(e) => setFilter({ ...filter, status: e.target.value })}
-                                            className="pl-3 pr-10 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all appearance-none cursor-pointer"
+                                <p className="text-xl font-black text-secondary mb-2">Clear Schedule</p>
+                                <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto">No records found for the selected filters. Take a break or check back later!</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
+                                <AnimatePresence mode="popLayout">
+                                    {appointments.map((apt) => (
+                                        <motion.div
+                                            key={apt._id}
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.9 }}
+                                            whileHover={{ y: -4 }}
+                                            className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/40 border border-white hover:border-primary-100 transition-all group flex flex-col justify-between"
                                         >
-                                            <option value="">All Statuses</option>
-                                            <option value="pending">Pending</option>
-                                            <option value="confirmed">Confirmed</option>
-                                            <option value="completed">Completed</option>
-                                            <option value="cancelled">Cancelled</option>
-                                        </select>
-                                    </div>
-                                    <div className="relative">
-                                        <input
-                                            type="date"
-                                            value={filter.date}
-                                            onChange={(e) => setFilter({ ...filter, date: e.target.value })}
-                                            className="px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all cursor-pointer"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Table Content */}
-                            {/* Responsive Table/Card View */}
-                            <div className="p-0">
-                                {loading ? (
-                                    <div className="flex flex-col items-center justify-center py-20 text-primary-600">
-                                        <div className="w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
-                                        <p className="mt-4 text-sm font-black text-slate-400 animate-pulse uppercase tracking-widest">Loading Records...</p>
-                                    </div>
-                                ) : appointments.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                                        <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-6 border border-slate-100 shadow-inner">
-                                            <Calendar className="w-8 h-8 text-slate-200" />
-                                        </div>
-                                        <p className="text-lg font-bold text-secondary mb-1">No appointments found</p>
-                                        <p className="text-sm font-medium text-slate-400">Try adjusting your filters or date selection</p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {/* Desktop Table View */}
-                                        <div className="hidden lg:block overflow-x-auto">
-                                            <table className="w-full text-left border-collapse">
-                                                <thead>
-                                                    <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
-                                                        <th className="px-6 py-4">Patient Details</th>
-                                                        <th className="px-6 py-4">Contact Info</th>
-                                                        <th className="px-6 py-4">Date & Slot</th>
-                                                        <th className="px-6 py-4">Status</th>
-                                                        <th className="px-6 py-4 text-right">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100">
-                                                    {appointments.map((apt) => (
-                                                        <tr key={apt._id} className="hover:bg-primary-50/30 transition-colors group">
-                                                            <td className="px-6 py-5">
-                                                                <div className="font-bold text-secondary text-base">{apt.name}</div>
-                                                                {apt.email && <div className="text-[10px] text-slate-400 font-medium">{apt.email}</div>}
-                                                            </td>
-                                                            <td className="px-6 py-5">
-                                                                <div className="flex items-center text-sm font-bold text-slate-600 bg-slate-100/50 w-fit px-3 py-1 rounded-lg border border-slate-200/50">
-                                                                    <Phone className="w-3.5 h-3.5 mr-2 text-primary-500" />
-                                                                    {apt.phone}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-5">
-                                                                <div className="flex items-center text-sm font-black text-secondary mb-1.5">
-                                                                    <Calendar className="w-3.5 h-3.5 mr-2 text-primary-500" />
-                                                                    {apt.date}
-                                                                </div>
-                                                                <div className="flex items-center text-[10px] font-black text-slate-500 uppercase tracking-wider ml-5.5">
-                                                                    {apt.shift}
-                                                                </div>
-                                                                {apt.confirmedTime && (
-                                                                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-primary-600 text-white shadow-sm">
-                                                                        <Clock className="w-2.5 h-2.5 mr-1" />
-                                                                        CONFIRMED @ {apt.confirmedTime}
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-6 py-5">
-                                                                {getStatusBadge(apt.status)}
-                                                            </td>
-                                                            <td className="px-6 py-5 text-right">
-                                                                <button
-                                                                    onClick={() => handleModalOpen(apt)}
-                                                                    className="inline-flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider text-primary-600 bg-white border border-primary-100 rounded-xl hover:bg-primary-600 hover:text-white hover:border-primary-600 shadow-sm transition-all group-hover:scale-105 active:scale-95"
-                                                                >
-                                                                    <Edit className="w-3.5 h-3.5" />
-                                                                    Manage
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        {/* Mobile/Tablet Card View */}
-                                        <div className="lg:hidden divide-y divide-slate-100">
-                                            {appointments.map((apt) => (
-                                                <div key={apt._id} className="p-5 hover:bg-slate-50/50 transition-colors">
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <div>
-                                                            <div className="font-black text-secondary text-lg mb-0.5">{apt.name}</div>
-                                                            <div className="flex items-center text-xs font-bold text-slate-500">
-                                                                <Phone className="w-3 h-3 mr-1.5 text-primary-500" />
-                                                                {apt.phone}
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            {getStatusBadge(apt.status)}
-                                                        </div>
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors">
+                                                        <User className="w-6 h-6" />
                                                     </div>
-
-                                                    <div className="bg-slate-100/50 rounded-2xl p-4 mb-4 border border-slate-200/50">
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <div className="flex items-center text-sm font-bold text-secondary">
-                                                                <Calendar className="w-3.5 h-3.5 mr-2 text-primary-600" />
-                                                                {apt.date}
-                                                            </div>
-                                                            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{apt.shift}</div>
-                                                        </div>
-                                                        {apt.confirmedTime && (
-                                                            <div className="flex items-center gap-2 bg-primary-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black w-fit mt-1 shadow-sm">
-                                                                <Clock className="w-3 h-3" />
-                                                                CONFIRMED @ {apt.confirmedTime}
-                                                            </div>
-                                                        )}
+                                                    <div>
+                                                        <h4 className="font-black text-secondary text-lg group-hover:text-primary-700 transition-colors">{apt.name}</h4>
+                                                        <p className="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wide">
+                                                            <Phone className="w-3 h-3" />
+                                                            {apt.phone}
+                                                        </p>
                                                     </div>
-
-                                                    <button
-                                                        onClick={() => handleModalOpen(apt)}
-                                                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-xs font-black uppercase tracking-[0.1em] text-secondary hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-[0.98]"
-                                                    >
-                                                        <Edit className="w-4 h-4 text-primary-600" />
-                                                        Appointment Controls
-                                                    </button>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
+                                                {getStatusBadge(apt.status)}
+                                            </div>
+
+                                            <div className="bg-slate-50/80 rounded-2xl p-4 space-y-3 mb-6 border border-slate-100/50 group-hover:bg-white transition-colors">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center text-sm font-bold text-slate-600">
+                                                        <Calendar className="w-4 h-4 mr-2 text-primary-500" />
+                                                        {apt.date}
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-slate-400 border border-slate-200 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                                        {apt.shift}
+                                                    </span>
+                                                </div>
+                                                {apt.confirmedTime ? (
+                                                    <div className="flex items-center gap-2 bg-primary-600 text-white px-3 py-2 rounded-xl text-xs font-black shadow-lg shadow-primary-200">
+                                                        <Clock className="w-3.5 h-3.5" />
+                                                        CONFIRMED @ {apt.confirmedTime}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 text-amber-600 text-[10px] font-black uppercase tracking-wider italic">
+                                                        <AlertCircle className="w-3 h-3" />
+                                                        Waitlisted Selection
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <button
+                                                onClick={() => handleModalOpen(apt)}
+                                                className="w-full flex items-center justify-center gap-2 py-4 bg-secondary text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-slate-200 hover:bg-primary-600 transition-all active:scale-[0.98]"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                                Manage Record
+                                            </button>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
                             </div>
-                        </motion.div>
+                        )}
                     </div>
 
                     {/* Side Column - Stats & Links */}
                     <div className="lg:col-span-4 xl:col-span-3 space-y-6">
-                        <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-bl-full -z-10 opacity-50"></div>
-                            <div className="flex items-center gap-3 mb-6">
-                                <Activity className="w-5 h-5 text-primary-600" />
-                                <h3 className="font-bold text-secondary">Today&apos;s Stats</h3>
+                        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-8 relative overflow-hidden">
+                            <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary-50 rounded-full opacity-50 blur-3xl"></div>
+                            <div className="flex items-center gap-3 mb-8 relative z-10">
+                                <div className="p-2 bg-primary-100 rounded-xl">
+                                    <Activity className="w-5 h-5 text-primary-600" />
+                                </div>
+                                <h3 className="font-bold text-secondary text-lg">Daily Performance</h3>
                             </div>
-                            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                                <div className="bg-amber-50/50 border border-amber-100 p-3 sm:p-4 rounded-xl">
-                                    <div className="text-[10px] font-black text-amber-600 uppercase mb-1 tracking-wider">Pending</div>
-                                    <div className="text-xl sm:text-2xl font-black text-amber-700">{stats.pending || 0}</div>
+                            <div className="grid grid-cols-2 gap-4 relative z-10">
+                                <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50 p-5 rounded-3xl shadow-sm group hover:scale-[1.02] transition-transform">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Pending</div>
+                                        <Clock className="w-4 h-4 text-amber-400" />
+                                    </div>
+                                    <div className="text-3xl font-black text-amber-700">{stats.pending || 0}</div>
                                 </div>
-                                <div className="bg-accent-50/50 border border-accent-100 p-3 sm:p-4 rounded-xl">
-                                    <div className="text-[10px] font-black text-accent-600 uppercase mb-1 tracking-wider">Confirmed</div>
-                                    <div className="text-xl sm:text-2xl font-black text-accent-700">{stats.confirmed || 0}</div>
+                                <div className="bg-gradient-to-br from-accent-50 to-accent-100/50 border border-accent-200/50 p-5 rounded-3xl shadow-sm group hover:scale-[1.02] transition-transform">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="text-[10px] font-black text-accent-600 uppercase tracking-widest">Confirmed</div>
+                                        <CheckCircle className="w-4 h-4 text-accent-400" />
+                                    </div>
+                                    <div className="text-3xl font-black text-accent-700">{stats.confirmed || 0}</div>
                                 </div>
-                                <div className="bg-primary-50/50 border border-primary-100 p-3 sm:p-4 rounded-xl">
-                                    <div className="text-[10px] font-black text-primary-600 uppercase mb-1 tracking-wider">Done</div>
-                                    <div className="text-xl sm:text-2xl font-black text-primary-700">{stats.completed || 0}</div>
+                                <div className="bg-gradient-to-br from-primary-50 to-primary-100/50 border border-primary-200/50 p-5 rounded-3xl shadow-sm group hover:scale-[1.02] transition-transform">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="text-[10px] font-black text-primary-600 uppercase tracking-widest">Completed</div>
+                                        <CheckCircle2 className="w-4 h-4 text-primary-400" />
+                                    </div>
+                                    <div className="text-3xl font-black text-primary-700">{stats.completed || 0}</div>
                                 </div>
-                                <div className="bg-rose-50/50 border border-rose-100 p-3 sm:p-4 rounded-xl">
-                                    <div className="text-[10px] font-black text-rose-600 uppercase mb-1 tracking-wider">Cancelled</div>
-                                    <div className="text-xl sm:text-2xl font-black text-rose-700">{stats.cancelled || 0}</div>
+                                <div className="bg-gradient-to-br from-rose-50 to-rose-100/50 border border-rose-200/50 p-5 rounded-3xl shadow-sm group hover:scale-[1.02] transition-transform">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Cancelled</div>
+                                        <XCircle className="w-4 h-4 text-rose-400" />
+                                    </div>
+                                    <div className="text-3xl font-black text-rose-700">{stats.cancelled || 0}</div>
                                 </div>
                             </div>
                         </motion.div>
@@ -535,12 +510,14 @@ export default function DashboardPage() {
                                     )}
 
                                     <div className="flex flex-col sm:flex-row gap-3">
-                                        <button
-                                            onClick={() => updateStatus(modal.data._id, "confirmed")}
-                                            className="flex-1 bg-accent-600 hover:bg-accent-700 text-white font-black text-xs uppercase tracking-widest py-3.5 px-4 rounded-xl shadow-lg shadow-accent-200 transition-all hover:-translate-y-0.5"
-                                        >
-                                            Confirm
-                                        </button>
+                                        {modal.data.status !== 'confirmed' && modal.data.status !== 'completed' && (
+                                            <button
+                                                onClick={() => updateStatus(modal.data._id, "confirmed")}
+                                                className="flex-1 bg-accent-600 hover:bg-accent-700 text-white font-black text-xs uppercase tracking-widest py-3.5 px-4 rounded-xl shadow-lg shadow-accent-200 transition-all hover:-translate-y-0.5"
+                                            >
+                                                Confirm
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => updateStatus(modal.data._id, "completed")}
                                             className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-black text-xs uppercase tracking-widest py-3.5 px-4 rounded-xl shadow-lg shadow-primary-200 transition-all hover:-translate-y-0.5"

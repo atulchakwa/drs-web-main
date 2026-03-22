@@ -1,8 +1,6 @@
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import FloatingActions from "../components/FloatingActions";
+import LayoutWrapper from "../components/LayoutWrapper";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -11,7 +9,6 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata = {
-  /* ... existing metadata ... */
   title: "Premium Medical Clinic | Dr. Rajesh Sharma",
   description: "Expert internal medicine and family care in Indore. Zero waiting times and highly personalized treatments. Book your consultation today.",
   keywords: "clinic, medical center, physician indore, dr rajesh sharma, internal medicine",
@@ -74,12 +71,9 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="bg-background text-secondary font-sans selection:bg-primary-100 selection:text-primary-900 flex flex-col items-center overflow-x-hidden min-h-screen">
-        <Navbar />
-        <main className="w-full flex-1 flex flex-col items-center">
+        <LayoutWrapper>
           {children}
-        </main>
-        <Footer />
-        <FloatingActions />
+        </LayoutWrapper>
       </body>
     </html>
   );
