@@ -11,29 +11,29 @@ import {
 
 const STATUS_STYLES = {
     pending: {
-        bg: "bg-amber-50/80", text: "text-amber-700", border: "border-amber-200/50",
-        icon: <Clock className="w-3.5 h-3.5 mr-1.5" />,
-        dot: "bg-amber-400"
+        bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-200",
+        icon: <Clock className="w-4 h-4 mr-2" />,
+        dot: "bg-amber-500"
     },
     confirmed: {
-        bg: "bg-emerald-50/80", text: "text-emerald-700", border: "border-emerald-200/50",
-        icon: <CheckCircle className="w-3.5 h-3.5 mr-1.5" />,
-        dot: "bg-emerald-400"
+        bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-200",
+        icon: <CheckCircle className="w-4 h-4 mr-2" />,
+        dot: "bg-emerald-500"
     },
     completed: {
-        bg: "bg-primary-50/80", text: "text-primary-700", border: "border-primary-200/50",
-        icon: <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />,
-        dot: "bg-primary-400"
+        bg: "bg-blue-100", text: "text-blue-800", border: "border-blue-200",
+        icon: <CheckCircle2 className="w-4 h-4 mr-2" />,
+        dot: "bg-blue-500"
     },
     cancelled: {
-        bg: "bg-rose-50/80", text: "text-rose-700", border: "border-rose-200/50",
-        icon: <XCircle className="w-3.5 h-3.5 mr-1.5" />,
-        dot: "bg-rose-400"
+        bg: "bg-rose-100", text: "text-rose-800", border: "border-rose-200",
+        icon: <XCircle className="w-4 h-4 mr-2" />,
+        dot: "bg-rose-500"
     },
     "no-show": {
-        bg: "bg-slate-50/80", text: "text-secondary/70", border: "border-slate-200/50",
-        icon: <AlertCircle className="w-3.5 h-3.5 mr-1.5" />,
-        dot: "bg-slate-400"
+        bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-200",
+        icon: <AlertCircle className="w-4 h-4 mr-2" />,
+        dot: "bg-slate-500"
     }
 };
 
@@ -141,8 +141,8 @@ export default function DashboardPage() {
     const getStatusBadge = (status) => {
         const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
         return (
-            <span className={`inline-flex items-center px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border ${style.bg} ${style.text} ${style.border} shadow-sm backdrop-blur-md transition-all`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${style.dot} mr-2 animate-pulse`}></span>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${style.bg} ${style.text} ${style.border}`}>
+                <span className={`w-2 h-2 rounded-full ${style.dot} mr-2`}></span>
                 {status}
             </span>
         );
@@ -177,37 +177,30 @@ export default function DashboardPage() {
             </AnimatePresence>
 
             {/* Top Navigation */}
-            <nav className="sticky top-0 z-40 bg-white/70 backdrop-blur-2xl border-b border-slate-200/50">
+            <nav className="sticky top-0 z-40 bg-white border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-20 items-center">
-                        <div className="flex items-center gap-6">
-                            <Link href="/" className="flex items-center gap-3 group">
-                                <div className="bg-gradient-to-br from-primary-600 to-primary-700 p-2.5 rounded-2xl shadow-lg shadow-primary-200 group-hover:scale-110 transition-transform">
-                                    <Activity className="w-6 h-6 text-white" />
-                                </div>
-                                <div className="hidden sm:block">
-                                    <h1 className="text-xl font-black text-secondary tracking-tighter leading-none">
-                                        Clinic <span className="text-primary-600">Admin</span>
-                                    </h1>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Management Portal</p>
-                                </div>
+                    <div className="flex justify-between h-16 items-center">
+                        <div className="flex items-center gap-4">
+                            <Link href="/" className="flex items-center gap-2 group">
+                                <Activity className="w-6 h-6 text-primary-600" />
+                                <h1 className="text-xl font-bold text-slate-900">
+                                    Clinic Admin
+                                </h1>
                             </Link>
                         </div>
 
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4">
                             <div className="hidden md:flex flex-col items-end">
-                                <span className="text-xs font-black text-secondary">{user?.email?.split('@')[0]}</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user?.email}</span>
+                                <span className="text-sm font-semibold text-slate-900">{user?.email?.split('@')[0]}</span>
+                                <span className="text-xs text-slate-500">{user?.email}</span>
                             </div>
-
-                            <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
 
                             <button
                                 onClick={handleLogout}
-                                className="flex items-center gap-2.5 px-5 py-2.5 bg-rose-50 text-rose-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95"
+                                className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg text-sm font-semibold transition-colors"
                             >
                                 <LogOut className="w-4 h-4" />
-                                <span className="hidden sm:inline">Logout</span>
+                                <span>Logout</span>
                             </button>
                         </div>
                     </div>
@@ -223,19 +216,19 @@ export default function DashboardPage() {
                     className="grid grid-cols-1 lg:grid-cols-12 gap-8"
                 >
                     {/* Main Content Area - Appointments */}
-                    <div className="lg:col-span-8 xl:col-span-9 space-y-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                    <div className="lg:col-span-8 xl:col-span-9 space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
-                                <h2 className="text-2xl font-bold text-secondary">Appointments</h2>
-                                <span className="bg-primary-100 text-primary-700 text-xs font-black px-3 py-1 rounded-full">
+                                <h2 className="text-xl font-bold text-slate-900">Appointments</h2>
+                                <span className="bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                                     {appointments.length} Total
                                 </span>
                             </div>
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap gap-2">
                                 <select
                                     value={filter.status}
                                     onChange={(e) => setFilter({ ...filter, status: e.target.value })}
-                                    className="pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-primary-500/20 outline-none cursor-pointer appearance-none transition-all"
+                                    className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none cursor-pointer"
                                 >
                                     <option value="">All Statuses</option>
                                     <option value="pending">Pending</option>
@@ -247,23 +240,21 @@ export default function DashboardPage() {
                                     type="date"
                                     value={filter.date}
                                     onChange={(e) => setFilter({ ...filter, date: e.target.value })}
-                                    className="px-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-primary-500/20 outline-none cursor-pointer"
+                                    className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none cursor-pointer"
                                 />
                             </div>
                         </div>
 
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center py-32 bg-white/50 rounded-[2.5rem] border-2 border-dashed border-slate-200">
-                                <div className="w-12 h-12 border-4 border-primary-100 border-t-primary-600 rounded-full animate-spin"></div>
-                                <p className="mt-6 text-sm font-black text-slate-400 uppercase tracking-widest animate-pulse">Synchronizing Records...</p>
+                            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-slate-200">
+                                <div className="w-10 h-10 border-4 border-slate-200 border-t-primary-600 rounded-full animate-spin"></div>
+                                <p className="mt-4 text-sm font-medium text-slate-500">Loading appointments...</p>
                             </div>
                         ) : appointments.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-32 bg-white/50 rounded-[2.5rem] border-2 border-dashed border-slate-200 text-center px-6">
-                                <div className="w-24 h-24 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8 rotate-12 transition-transform hover:rotate-0 border border-slate-50">
-                                    <Calendar className="w-10 h-10 text-slate-200" />
-                                </div>
-                                <p className="text-xl font-black text-secondary mb-2">Clear Schedule</p>
-                                <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto">No records found for the selected filters. Take a break or check back later!</p>
+                            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-slate-200 text-center px-6">
+                                <Calendar className="w-12 h-12 text-slate-300 mb-4" />
+                                <p className="text-lg font-bold text-slate-900 mb-1">No appointments found</p>
+                                <p className="text-sm text-slate-500">Try adjusting your filters or check back later.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
