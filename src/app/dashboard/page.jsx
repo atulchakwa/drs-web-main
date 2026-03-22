@@ -148,18 +148,9 @@ export default function DashboardPage() {
         );
     };
 
-    const containerVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.1 } }
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
-    };
 
     return (
-        <div className="min-h-screen bg-slate-50/50 selection:bg-primary-100 selection:text-primary-900 font-sans text-secondary">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
             {/* Toast Notifications */}
             <AnimatePresence>
                 {toast && (
@@ -209,12 +200,7 @@ export default function DashboardPage() {
 
             {/* Main Content Area */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="grid grid-cols-1 lg:grid-cols-12 gap-8"
-                >
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Main Content Area - Appointments */}
                     <div className="lg:col-span-8 xl:col-span-9 space-y-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -257,132 +243,100 @@ export default function DashboardPage() {
                                 <p className="text-sm text-slate-500">Try adjusting your filters or check back later.</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
-                                <AnimatePresence mode="popLayout">
-                                    {appointments.map((apt) => (
-                                        <motion.div
-                                            key={apt._id}
-                                            layout
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9 }}
-                                            whileHover={{ y: -4 }}
-                                            className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/40 border border-white hover:border-primary-100 transition-all group flex flex-col justify-between"
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {appointments.map((apt) => (
+                                    <div
+                                        key={apt._id}
+                                        className="bg-white rounded-xl p-5 border border-slate-200 hover:border-primary-500 transition-colors shadow-sm flex flex-col justify-between"
+                                    >
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+                                                    <User className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-900">{apt.name}</h4>
+                                                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                                                        <Phone className="w-3 h-3" />
+                                                        {apt.phone}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {getStatusBadge(apt.status)}
+                                        </div>
+
+                                        <div className="bg-slate-50 rounded-lg p-3 space-y-2 mb-4 border border-slate-100 text-sm">
+                                            <div className="flex items-center justify-between font-medium text-slate-700">
+                                                <div className="flex items-center">
+                                                    <Calendar className="w-4 h-4 mr-2 text-primary-600" />
+                                                    {apt.date}
+                                                </div>
+                                                <span className="text-xs bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-600">
+                                                    {apt.shift}
+                                                </span>
+                                            </div>
+                                            {apt.confirmedTime && (
+                                                <div className="flex items-center gap-2 text-primary-700 font-semibold bg-primary-100 px-2 py-1 rounded">
+                                                    <Clock className="w-3.5 h-3.5" />
+                                                    Confirmed at {apt.confirmedTime}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            onClick={() => handleModalOpen(apt)}
+                                            className="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-primary-600 transition-colors"
                                         >
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors">
-                                                        <User className="w-6 h-6" />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-black text-secondary text-lg group-hover:text-primary-700 transition-colors">{apt.name}</h4>
-                                                        <p className="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wide">
-                                                            <Phone className="w-3 h-3" />
-                                                            {apt.phone}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                {getStatusBadge(apt.status)}
-                                            </div>
-
-                                            <div className="bg-slate-50/80 rounded-2xl p-4 space-y-3 mb-6 border border-slate-100/50 group-hover:bg-white transition-colors">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center text-sm font-bold text-slate-600">
-                                                        <Calendar className="w-4 h-4 mr-2 text-primary-500" />
-                                                        {apt.date}
-                                                    </div>
-                                                    <span className="text-[10px] font-black text-slate-400 border border-slate-200 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                                                        {apt.shift}
-                                                    </span>
-                                                </div>
-                                                {apt.confirmedTime ? (
-                                                    <div className="flex items-center gap-2 bg-primary-600 text-white px-3 py-2 rounded-xl text-xs font-black shadow-lg shadow-primary-200">
-                                                        <Clock className="w-3.5 h-3.5" />
-                                                        CONFIRMED @ {apt.confirmedTime}
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center gap-2 text-amber-600 text-[10px] font-black uppercase tracking-wider italic">
-                                                        <AlertCircle className="w-3 h-3" />
-                                                        Waitlisted Selection
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <button
-                                                onClick={() => handleModalOpen(apt)}
-                                                className="w-full flex items-center justify-center gap-2 py-4 bg-secondary text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-slate-200 hover:bg-primary-600 transition-all active:scale-[0.98]"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                                Manage Record
-                                            </button>
-                                        </motion.div>
-                                    ))}
-                                </AnimatePresence>
+                                            Manage Appointment
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
 
                     {/* Side Column - Stats & Links */}
-                    <div className="lg:col-span-4 xl:col-span-3 space-y-6">
-                        <motion.div variants={itemVariants} className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/50 border border-white p-8 relative overflow-hidden">
-                            <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary-50 rounded-full opacity-50 blur-3xl"></div>
-                            <div className="flex items-center gap-3 mb-8 relative z-10">
-                                <div className="p-2 bg-primary-100 rounded-xl">
-                                    <Activity className="w-5 h-5 text-primary-600" />
+                    <div className="lg:col-span-4 xl:col-span-3 space-y-4">
+                        <div className="bg-white rounded-xl border border-slate-200 p-6">
+                            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                <Activity className="w-5 h-5 text-primary-600" />
+                                Daily Stats
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-amber-50 border border-amber-100 p-3 rounded-lg">
+                                    <div className="text-[10px] font-bold text-amber-600 uppercase">Pending</div>
+                                    <div className="text-2xl font-bold text-amber-700">{stats.pending || 0}</div>
                                 </div>
-                                <h3 className="font-bold text-secondary text-lg">Daily Performance</h3>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 relative z-10">
-                                <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50 p-5 rounded-3xl shadow-sm group hover:scale-[1.02] transition-transform">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Pending</div>
-                                        <Clock className="w-4 h-4 text-amber-400" />
-                                    </div>
-                                    <div className="text-3xl font-black text-amber-700">{stats.pending || 0}</div>
+                                <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-lg">
+                                    <div className="text-[10px] font-bold text-emerald-600 uppercase">Confirmed</div>
+                                    <div className="text-2xl font-bold text-emerald-700">{stats.confirmed || 0}</div>
                                 </div>
-                                <div className="bg-gradient-to-br from-accent-50 to-accent-100/50 border border-accent-200/50 p-5 rounded-3xl shadow-sm group hover:scale-[1.02] transition-transform">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="text-[10px] font-black text-accent-600 uppercase tracking-widest">Confirmed</div>
-                                        <CheckCircle className="w-4 h-4 text-accent-400" />
-                                    </div>
-                                    <div className="text-3xl font-black text-accent-700">{stats.confirmed || 0}</div>
+                                <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg">
+                                    <div className="text-[10px] font-bold text-blue-600 uppercase">Completed</div>
+                                    <div className="text-2xl font-bold text-blue-700">{stats.completed || 0}</div>
                                 </div>
-                                <div className="bg-gradient-to-br from-primary-50 to-primary-100/50 border border-primary-200/50 p-5 rounded-3xl shadow-sm group hover:scale-[1.02] transition-transform">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="text-[10px] font-black text-primary-600 uppercase tracking-widest">Completed</div>
-                                        <CheckCircle2 className="w-4 h-4 text-primary-400" />
-                                    </div>
-                                    <div className="text-3xl font-black text-primary-700">{stats.completed || 0}</div>
-                                </div>
-                                <div className="bg-gradient-to-br from-rose-50 to-rose-100/50 border border-rose-200/50 p-5 rounded-3xl shadow-sm group hover:scale-[1.02] transition-transform">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Cancelled</div>
-                                        <XCircle className="w-4 h-4 text-rose-400" />
-                                    </div>
-                                    <div className="text-3xl font-black text-rose-700">{stats.cancelled || 0}</div>
+                                <div className="bg-rose-50 border border-rose-100 p-3 rounded-lg">
+                                    <div className="text-[10px] font-bold text-rose-600 uppercase">Cancelled</div>
+                                    <div className="text-2xl font-bold text-rose-700">{stats.cancelled || 0}</div>
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
 
-                        <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
-                            <h3 className="font-bold text-secondary mb-4 flex items-center gap-2">
+                        <div className="bg-white rounded-xl border border-slate-200 p-5">
+                            <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
                                 <LayoutDashboard className="w-5 h-5 text-primary-600" />
                                 Quick Links
                             </h3>
-                            <div className="space-y-3">
-                                <Link href="/" className="group flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-slate-100 hover:border-slate-300 transition-all">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-white p-2 rounded-lg shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
-                                            <Globe className="w-4 h-4 text-primary-600" />
-                                        </div>
-                                        <span className="font-medium text-sm text-slate-700">View Public Site</span>
-                                    </div>
-                                    <Activity className="w-4 h-4 text-slate-400 group-hover:text-primary-500" />
-                                </Link>
-                            </div>
-                        </motion.div>
+                            <Link href="/" className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg hover:bg-slate-100 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <Globe className="w-4 h-4 text-slate-600" />
+                                    <span className="font-medium text-sm text-slate-700">View Public Site</span>
+                                </div>
+                                <Activity className="w-4 h-4 text-slate-400" />
+                            </Link>
+                        </div>
                     </div>
-                </motion.div>
+                </div>
             </div>
 
             {/* Modal */}
@@ -398,126 +352,103 @@ export default function DashboardPage() {
                         />
 
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
-                            className="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-lg w-full overflow-hidden relative z-10"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden relative z-10"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Modal Header */}
-                            <div className="bg-slate-50 border-b border-slate-100 p-6 flex items-start justify-between">
+                            <div className="bg-slate-50 border-b border-slate-200 p-5 flex items-start justify-between">
                                 <div>
-                                    <h3 className="text-xl font-bold text-secondary mb-1">Manage Appointment</h3>
-                                    <p className="text-sm font-medium text-slate-500">Update status and confirm scheduling</p>
+                                    <h3 className="text-lg font-bold text-slate-900">Manage Appointment</h3>
+                                    <p className="text-sm text-slate-500">Update status and confirm scheduling</p>
                                 </div>
                                 <button
                                     onClick={() => setModal({ show: false })}
-                                    className="p-2 bg-white hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors shadow-sm border border-slate-200"
+                                    className="p-1 hover:bg-slate-200 rounded text-slate-400 transition-colors"
                                 >
                                     <XCircle className="w-5 h-5" />
                                 </button>
                             </div>
 
                             {/* Modal Body */}
-                            <div className="p-6 space-y-6">
+                            <div className="p-5 space-y-4">
                                 {/* Patient Summary */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                        <div className="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wider">Patient</div>
-                                        <div className="font-semibold text-secondary flex items-center gap-2">
-                                            <User className="w-4 h-4 text-primary-500" />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Patient</div>
+                                        <div className="font-semibold text-slate-900 flex items-center gap-2">
+                                            <User className="w-4 h-4 text-primary-600" />
                                             {modal.data.name}
                                         </div>
                                     </div>
-                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                        <div className="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wider">Contact</div>
-                                        <div className="font-semibold text-secondary flex items-center gap-2">
-                                            <Phone className="w-4 h-4 text-primary-500" />
+                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Contact</div>
+                                        <div className="font-semibold text-slate-900 flex items-center gap-2">
+                                            <Phone className="w-4 h-4 text-primary-600" />
                                             {modal.data.phone || 'N/A'}
                                         </div>
                                     </div>
-                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                        <div className="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wider">Date & Time</div>
-                                        <div className="font-semibold text-secondary flex flex-col gap-1">
+                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Date & Time</div>
+                                        <div className="font-semibold text-slate-900">
                                             <div className="flex items-center gap-2">
-                                                <Calendar className="w-4 h-4 text-primary-500" />
+                                                <Calendar className="w-4 h-4 text-primary-600" />
                                                 {modal.data.date}
                                             </div>
                                             <div className="text-xs text-slate-500 ml-6">{modal.data.shift}</div>
-                                            {modal.data.preferredTime && (
-                                                <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded inline-flex w-fit mt-1">
-                                                    Preferred: {modal.data.preferredTime}
-                                                </div>
-                                            )}
-                                            {modal.data.confirmedTime && (
-                                                <div className="text-xs text-accent-600 bg-accent-50 px-2 py-1 rounded inline-flex w-fit mt-1">
-                                                    @ {modal.data.confirmedTime}
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
-                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col">
-                                        <div className="text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider">Current Status</div>
-                                        <div className="mt-auto mb-2">
-                                            {getStatusBadge(modal.data.status)}
-                                        </div>
+                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Current Status</div>
+                                        <div>{getStatusBadge(modal.data.status)}</div>
                                     </div>
 
                                     {modal.data.message && (
-                                        <div className="col-span-2 bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
-                                            <div className="text-xs font-bold text-amber-600 uppercase mb-1 tracking-wider">Patient Message</div>
-                                            <p className="text-sm font-medium text-slate-700 italic">&quot;{modal.data.message}&quot;</p>
+                                        <div className="col-span-2 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                                            <div className="text-[10px] font-bold text-amber-600 uppercase mb-1">Patient Message</div>
+                                            <p className="text-sm text-slate-700 italic">"{modal.data.message}"</p>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Actions Section */}
-                                <div className="border-t border-slate-100 pt-6">
-                                    <h4 className="text-sm font-bold text-secondary mb-4 uppercase tracking-wider">Update Status Action</h4>
+                                <div className="border-t border-slate-200 pt-5">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Update Status</h4>
 
                                     {modal.data.status === 'pending' && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            className="mb-5 bg-primary-50/50 p-5 rounded-2xl border border-primary-100 shadow-sm"
-                                        >
-                                            <label className="flex items-center gap-2 text-sm font-bold text-primary-900 mb-3">
-                                                <Clock className="w-4 h-4 text-primary-600" />
-                                                Assign Specific Time (Optional)
+                                        <div className="mb-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                Assign Time (Optional)
                                             </label>
-                                            <div className="bg-white border text-xl font-bold border-primary-200 rounded-xl overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
-                                                <input
-                                                    type="time"
-                                                    value={confirmTime}
-                                                    onChange={(e) => setConfirmTime(e.target.value)}
-                                                    className="w-full px-4 py-3 text-secondary bg-transparent outline-none"
-                                                />
-                                            </div>
-                                            <p className="text-xs font-medium text-primary-600/70 mt-2">
-                                                Assigning a time will lock the slot for this patient.
-                                            </p>
-                                        </motion.div>
+                                            <input
+                                                type="time"
+                                                value={confirmTime}
+                                                onChange={(e) => setConfirmTime(e.target.value)}
+                                                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-500"
+                                            />
+                                        </div>
                                     )}
 
-                                    <div className="flex flex-col sm:flex-row gap-3">
+                                    <div className="flex flex-col sm:flex-row gap-2">
                                         {modal.data.status !== 'confirmed' && modal.data.status !== 'completed' && (
                                             <button
                                                 onClick={() => updateStatus(modal.data._id, "confirmed")}
-                                                className="flex-1 bg-accent-600 hover:bg-accent-700 text-white font-black text-xs uppercase tracking-widest py-3.5 px-4 rounded-xl shadow-lg shadow-accent-200 transition-all hover:-translate-y-0.5"
+                                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg transition-colors"
                                             >
                                                 Confirm
                                             </button>
                                         )}
                                         <button
                                             onClick={() => updateStatus(modal.data._id, "completed")}
-                                            className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-black text-xs uppercase tracking-widest py-3.5 px-4 rounded-xl shadow-lg shadow-primary-200 transition-all hover:-translate-y-0.5"
+                                            className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 rounded-lg transition-colors"
                                         >
                                             Complete
                                         </button>
                                         <button
                                             onClick={() => updateStatus(modal.data._id, "cancelled")}
-                                            className="flex-1 bg-white border-2 border-slate-100 text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 font-black text-xs uppercase tracking-widest py-3.5 px-4 rounded-xl transition-all"
+                                            className="flex-1 bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 font-bold py-2 rounded-lg transition-colors"
                                         >
                                             Cancel
                                         </button>
@@ -526,19 +457,19 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="bg-slate-50 border-t border-slate-100 p-4 px-6 flex justify-between items-center rounded-b-3xl">
+                            <div className="bg-slate-50 border-t border-slate-200 p-4 px-5 flex justify-between items-center">
                                 <button
                                     onClick={() => deleteAppointment(modal.data._id)}
-                                    className="text-rose-600 text-sm font-bold hover:text-rose-800 flex items-center gap-1.5 px-3 py-1.5 hover:bg-rose-100 rounded-lg transition-colors"
+                                    className="text-rose-600 text-sm font-bold hover:underline flex items-center gap-1.5"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                     Delete Record
                                 </button>
                                 <button
                                     onClick={() => setModal({ show: false })}
-                                    className="text-slate-500 text-sm font-bold hover:text-secondary px-4 py-2 hover:bg-slate-200 rounded-lg transition-colors"
+                                    className="text-slate-500 text-sm font-bold hover:text-slate-900"
                                 >
-                                    Close Window
+                                    Close
                                 </button>
                             </div>
                         </motion.div>
