@@ -12,10 +12,10 @@ export default function Gallery() {
         <section className="w-full max-w-7xl mx-auto px-4 md:px-6 py-20" id="gallery">
             <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-6">
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-medium mb-4 text-[#1A1A1A]">Clinic Gallery</h2>
-                    <p className="text-gray-500 max-w-xl font-medium">Take a look inside our state-of-the-art facility designed for your comfort and safety.</p>
+                    <h2 className="text-4xl md:text-5xl font-medium mb-4 text-secondary">Clinic Gallery</h2>
+                    <p className="text-slate-500 max-w-xl font-medium">Take a look inside our state-of-the-art facility designed for your comfort and safety.</p>
                 </div>
-                <button className="hidden md:flex items-center gap-2 text-sm font-semibold text-gray-800 hover:text-rose-500 transition border-b-2 border-transparent hover:border-rose-500 pb-1">
+                <button className="hidden md:flex items-center gap-2 text-sm font-semibold text-secondary hover:text-primary-600 transition border-b-2 border-transparent hover:border-primary-600 pb-1">
                     View all photos <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                 </button>
             </div>

@@ -18,8 +18,8 @@ export default function Navbar() {
 
   return (
     <nav className="w-full max-w-7xl px-4 md:px-8 py-6 flex items-center justify-between z-50 bg-transparent relative">
-      <Link href="/" className="text-2xl font-black tracking-tighter text-slate-900 group">
-        Premium<span className="text-indigo-600 group-hover:text-indigo-500 transition-colors">Care</span>
+      <Link href="/" className="text-2xl font-black tracking-tighter text-secondary group">
+        Premium<span className="text-primary-600 group-hover:text-primary-500 transition-colors">Care</span>
       </Link>
 
       {/* Desktop Navigation */}
@@ -28,23 +28,23 @@ export default function Navbar() {
           <Link
             key={link.name}
             href={link.href}
-            className={`${link.extra || 'hover:text-indigo-600'} transition-all duration-300 py-1 relative group`}
+            className={`${link.extra || 'hover:text-primary-600'} transition-all duration-300 py-1 relative group`}
           >
             {link.name}
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-full"></span>
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
           </Link>
         ))}
       </div>
 
       <div className="flex items-center gap-4">
-        <Link href="/#appointment" className="hidden sm:block bg-indigo-600 text-white px-6 py-2.5 rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 hover:-translate-y-0.5 active:scale-95">
+        <Link href="/#appointment" className="hidden sm:block bg-primary-600 text-white px-6 py-2.5 rounded-2xl text-sm font-bold hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 hover:-translate-y-0.5 active:scale-95">
           Consult now
         </Link>
 
         {/* Mobile Menu Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden p-2 text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
+          className="md:hidden p-2 text-secondary hover:bg-slate-100 rounded-xl transition-colors"
           aria-label="Toggle menu"
         >
           {isOpen ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
@@ -58,14 +58,14 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-4 right-4 mt-2 p-6 bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/50 md:hidden flex flex-col gap-6 z-[100]"
+            className="absolute top-full left-4 right-4 mt-2 p-6 glass rounded-[2.5rem] shadow-2xl md:hidden flex flex-col gap-6 z-[100]"
           >
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
-                className={`text-lg font-bold ${link.name === 'Admin' ? 'text-slate-400 text-sm' : 'text-slate-900'} hover:text-indigo-600 transition-colors`}
+                className={`text-lg font-bold ${link.name === 'Admin' ? 'text-slate-400 text-sm' : 'text-secondary'} hover:text-primary-600 transition-colors`}
               >
                 {link.name}
               </Link>
@@ -73,7 +73,7 @@ export default function Navbar() {
             <Link
               href="/#appointment"
               onClick={() => setIsOpen(false)}
-              className="w-full bg-indigo-600 text-white py-4 rounded-2xl text-center font-bold text-lg shadow-lg shadow-indigo-200"
+              className="w-full bg-primary-600 text-white py-4 rounded-2xl text-center font-bold text-lg shadow-lg shadow-primary-200"
             >
               Consult now
             </Link>

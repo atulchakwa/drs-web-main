@@ -28,7 +28,7 @@ export default function TestimonialsSlider() {
         <section className="w-full relative py-24 overflow-hidden bg-gradient-to-b from-white to-slate-50" id="testimonials">
 
             {/* Background embellishments */}
-            <div className="absolute top-0 right-0 w-1/3 h-1/2 bg-amber-50 rounded-bl-full opacity-50 blur-3xl -z-10"></div>
+            <div className="absolute top-0 right-0 w-1/3 h-1/2 bg-primary-50/50 rounded-bl-full opacity-50 blur-3xl -z-10"></div>
 
             <div className="max-w-5xl mx-auto px-4 md:px-8">
                 <div className="flex flex-col items-center text-center mb-16">
@@ -36,16 +36,16 @@ export default function TestimonialsSlider() {
                         <Star className="w-4 h-4 fill-current" />
                         <span className="text-xs font-black uppercase tracking-widest">Patient Reviews</span>
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-black mb-6 text-slate-900 tracking-tight">Patient <span className="text-indigo-600">Experiences</span></h2>
-                    <p className="text-slate-500 font-medium text-lg max-w-xl">Real stories from the people whose lives we've helped manage and improve.</p>
+                    <h2 className="text-4xl md:text-5xl font-black mb-6 text-secondary tracking-tight">Patient <span className="text-primary-600">Experiences</span></h2>
+                    <p className="text-slate-500 font-medium text-lg max-w-xl">Real stories from the people whose lives we&apos;ve helped manage and improve.</p>
                 </div>
 
-                <div className="relative w-full mx-auto pb-16">
+                <div className="relative w-full mx-auto pb-16 min-h-[300px] md:min-h-[250px]">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10">
-                        <Quote className="w-40 h-40 text-indigo-600" />
+                        <Quote className="w-40 h-40 text-primary-600" />
                     </div>
 
-                    <div className="relative h-[280px] md:h-[220px]">
+                    <div className="relative">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={current}
@@ -53,9 +53,9 @@ export default function TestimonialsSlider() {
                                 animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
                                 exit={{ opacity: 0, scale: 1.05, filter: "blur(4px)" }}
                                 transition={{ duration: 0.5, ease: "easeInOut" }}
-                                className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 md:px-12"
+                                className="flex flex-col items-center justify-center text-center px-4 md:px-12"
                             >
-                                <p className="text-slate-800 font-medium text-2xl md:text-3xl leading-relaxed mb-8 max-w-4xl tracking-tight z-10 relative">
+                                <p className="text-secondary font-medium text-2xl md:text-3xl leading-relaxed mb-8 max-w-4xl tracking-tight z-10 relative italic">
                                     &ldquo;{testimonials[current].text}&rdquo;
                                 </p>
 
@@ -65,8 +65,8 @@ export default function TestimonialsSlider() {
                                             <Star key={i} className="w-5 h-5 fill-current" />
                                         ))}
                                     </div>
-                                    <h4 className="font-bold text-slate-900 tracking-wide">{testimonials[current].name}</h4>
-                                    <p className="text-sm text-slate-400 font-medium">{testimonials[current].time}</p>
+                                    <h4 className="font-bold text-secondary tracking-wide">{testimonials[current].name}</h4>
+                                    <p className="text-slate-400 font-medium text-sm tracking-wide uppercase">{testimonials[current].time}</p>
                                 </div>
                             </motion.div>
                         </AnimatePresence>
@@ -74,10 +74,10 @@ export default function TestimonialsSlider() {
 
                     {/* Navigation Buttons */}
                     <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between px-2 sm:px-0 pointer-events-none hidden md:flex">
-                        <button onClick={handlePrevious} className="pointer-events-auto w-12 h-12 rounded-full bg-white border border-slate-100 shadow-md flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:scale-110 hover:shadow-lg transition-all -translate-x-6 z-20">
+                        <button onClick={handlePrevious} className="pointer-events-auto w-12 h-12 rounded-full bg-white border border-slate-100 shadow-md flex items-center justify-center text-slate-400 hover:text-primary-600 hover:scale-110 hover:shadow-lg transition-all -translate-x-6 z-20">
                             <ChevronLeft className="w-6 h-6" />
                         </button>
-                        <button onClick={handleNext} className="pointer-events-auto w-12 h-12 rounded-full bg-white border border-slate-100 shadow-md flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:scale-110 hover:shadow-lg transition-all translate-x-6 z-20">
+                        <button onClick={handleNext} className="pointer-events-auto w-12 h-12 rounded-full bg-white border border-slate-100 shadow-md flex items-center justify-center text-slate-400 hover:text-primary-600 hover:scale-110 hover:shadow-lg transition-all translate-x-6 z-20">
                             <ChevronRight className="w-6 h-6" />
                         </button>
                     </div>
@@ -88,7 +88,7 @@ export default function TestimonialsSlider() {
                             <button
                                 key={idx}
                                 onClick={() => setCurrent(idx)}
-                                className={`h-2 transition-all duration-500 rounded-full ${current === idx ? 'bg-indigo-600 w-8 shadow-sm shadow-indigo-200' : 'bg-slate-200 w-2 hover:bg-slate-300 hover:scale-125'}`}
+                                className={`h-2 transition-all duration-500 rounded-full ${current === idx ? 'bg-primary-600 w-8 shadow-sm shadow-primary-200' : 'bg-slate-200 w-2 hover:bg-slate-300 hover:scale-125'}`}
                                 aria-label={`Go to slide ${idx + 1}`}
                             />
                         ))}

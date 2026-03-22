@@ -39,14 +39,14 @@ export default function AppointmentForm() {
     maxDate.setDate(maxDate.getDate() + 60);
     const maxDateValue = maxDate.toISOString().split('T')[0];
 
-    const [formData, setFormData] = useState({ 
-        name: '', 
-        phone: '', 
-        email: '', 
-        date: '', 
-        shift: 'Morning (9 AM - 1 PM)', 
-        preferredTime: '', 
-        message: '' 
+    const [formData, setFormData] = useState({
+        name: '',
+        phone: '',
+        email: '',
+        date: '',
+        shift: 'Morning (9 AM - 1 PM)',
+        preferredTime: '',
+        message: ''
     });
     const [status, setStatus] = useState('idle');
     const [errorMessage, setErrorMessage] = useState('');
@@ -54,18 +54,18 @@ export default function AppointmentForm() {
 
     const getTimeSlots = () => {
         if (!formData.shift) return [];
-        
+
         const slots = [];
         const shiftInfo = SHIFT_OPTIONS[formData.shift];
         if (!shiftInfo) return [];
 
         const [startHour, startMin] = shiftInfo.hours.split(' - ')[0].split(' ')[0].split(':');
         const [endHour, endMin] = shiftInfo.hours.split(' - ')[1].split(' ')[0].split(':');
-        
+
         let start = parseInt(startHour);
         const end = parseInt(endHour);
         const isPM = shiftInfo.hours.includes('PM') && end !== 12;
-        
+
         if (isPM && start !== 12) start += 12;
         if (shiftInfo.hours.includes('AM') && end === 12) start += 12;
 
@@ -198,100 +198,102 @@ export default function AppointmentForm() {
     const closedMessage = getClinicClosedMessage();
 
     return (
-        <section className="w-full max-w-7xl mx-auto px-4 md:px-8 py-24 border-t border-gray-200/60" id="appointment">
-            <div className="bg-[#111] rounded-3xl p-8 md:p-16 grid lg:grid-cols-2 gap-16 items-center shadow-2xl">
+        <section className="w-full max-w-7xl mx-auto px-4 md:px-8 py-24 border-t border-slate-200/60" id="appointment">
+            <div className="bg-secondary rounded-5xl p-8 md:p-16 grid lg:grid-cols-2 gap-16 items-center shadow-2xl relative overflow-hidden">
 
-                <div className="text-white">
-                    <h2 className="text-4xl md:text-5xl font-medium mb-6 leading-tight tracking-tight">Request an<br />Appointment</h2>
-                    <p className="text-gray-400 font-light mb-8 max-w-md text-lg leading-relaxed">
+                {/* Subtle background glow for dark section */}
+                <div className="absolute top-0 left-0 w-96 h-96 bg-primary-900/20 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2"></div>
+
+                <div className="text-white relative z-10">
+                    <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight tracking-tight">Request an<br />Appointment</h2>
+                    <p className="text-slate-400 font-medium mb-8 max-w-md text-lg leading-relaxed">
                         Fill out the form with your preferred date and time slot. Our front desk will contact you to confirm.
                     </p>
 
-                    <div className="bg-white/5 rounded-2xl p-6 mb-6">
-                        <h4 className="font-medium text-white mb-4 tracking-wide">Clinic Schedule</h4>
+                    <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 mb-6 border border-white/10">
+                        <h4 className="font-bold text-white mb-4 tracking-wide uppercase text-xs">Clinic Schedule</h4>
                         <div className="space-y-3 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-gray-400">Monday - Friday</span>
-                                <span className="text-white">9 AM - 1 PM | 4 PM - 8 PM</span>
+                                <span className="text-slate-400 font-medium">Monday - Friday</span>
+                                <span className="text-white font-bold text-right">9 AM - 1 PM | 4 PM - 8 PM</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-400">Saturday</span>
-                                <span className="text-white">9 AM - 2 PM</span>
+                                <span className="text-slate-400 font-medium">Saturday</span>
+                                <span className="text-white font-bold text-right">9 AM - 2 PM</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-red-400">Sunday</span>
-                                <span className="text-red-400">Closed</span>
+                                <span className="text-rose-400 font-medium">Sunday</span>
+                                <span className="text-rose-400 font-bold">Closed</span>
                             </div>
                         </div>
-                        <p className="text-gray-500 text-xs mt-4 italic">Note: Lunch break from 1 PM - 4 PM on weekdays</p>
+                        <p className="text-slate-500 text-xs mt-4 italic font-medium">Note: Lunch break from 1 PM - 4 PM on weekdays</p>
                     </div>
 
                     <div className="space-y-4 border-t border-white/10 pt-8">
                         <div>
-                            <h4 className="font-medium text-white mb-2 tracking-wide">Emergency Contact</h4>
-                            <a href={`tel:${clinicPhone}`} className="text-lg font-medium text-white hover:text-gray-300 transition underline underline-offset-4 decoration-white/30">{clinicPhone}</a>
+                            <h4 className="font-bold text-white mb-2 tracking-wide uppercase text-xs">Emergency Contact</h4>
+                            <a href={`tel:${clinicPhone}`} className="text-2xl font-black text-white hover:text-primary-400 transition underline underline-offset-8 decoration-white/20">{clinicPhone}</a>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-8 md:p-10 relative shadow-xl">
+                <div className="bg-white rounded-3xl p-8 md:p-10 relative shadow-2xl z-10">
 
                     {status === 'success' && (
-                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-10 rounded-2xl flex flex-col items-center justify-center text-center p-8 border border-gray-100">
-                            <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center text-2xl mb-6">✓</div>
-                            <h3 className="text-2xl font-medium text-gray-900 mb-2">Appointment Requested!</h3>
-                            <p className="text-gray-500 font-light max-w-sm mb-4">Your request has been received.</p>
-                            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 mb-6">
-                                <p><strong>Date:</strong> {formData.date}</p>
-                                <p><strong>Shift:</strong> {formData.shift}</p>
-                                {formData.preferredTime && <p><strong>Preferred Time:</strong> {formData.preferredTime}</p>}
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 rounded-3xl flex flex-col items-center justify-center text-center p-8 border border-slate-100">
+                            <div className="w-20 h-20 bg-accent text-white rounded-full flex items-center justify-center text-3xl mb-6 shadow-lg shadow-accent/20">✓</div>
+                            <h3 className="text-2xl font-black text-secondary mb-2">Appointment Requested!</h3>
+                            <p className="text-slate-500 font-medium max-w-sm mb-4">Your request has been received.</p>
+                            <div className="bg-slate-50 rounded-2xl p-6 text-sm text-secondary mb-6 w-full border border-slate-100">
+                                <div className="flex justify-between mb-2"><span className="text-slate-400">Date:</span> <strong>{formData.date}</strong></div>
+                                <div className="flex justify-between mb-2"><span className="text-slate-400">Shift:</span> <strong>{formData.shift}</strong></div>
+                                {formData.preferredTime && <div className="flex justify-between"><span className="text-slate-400">Time:</span> <strong>{formData.preferredTime}</strong></div>}
                             </div>
-                            <p className="text-gray-500 font-light max-w-sm mb-6">Our staff will contact you shortly to confirm your slot.</p>
-                            <button onClick={() => setStatus('idle')} className="text-sm font-semibold text-black border-b border-black pb-1 hover:text-gray-600 transition">Book another</button>
+                            <p className="text-slate-500 font-medium max-w-sm mb-6">Our staff will contact you shortly to confirm your slot.</p>
+                            <button onClick={() => setStatus('idle')} className="text-sm font-black text-primary-600 border-b-2 border-primary-600 pb-1 hover:text-primary-700 transition">Book another</button>
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Full Name</label>
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Full Name</label>
                                 <input
                                     type="text"
                                     required
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm outline-none font-medium placeholder:font-normal"
                                     placeholder="Enter your name"
                                     maxLength={100}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Phone Number</label>
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Phone Number</label>
                                 <input
                                     type="tel"
                                     required
                                     value={formData.phone}
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm outline-none font-medium placeholder:font-normal"
                                     placeholder="+91 98765 43210"
                                 />
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Email (for confirmation)</label>
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Email Address</label>
                             <input
                                 type="email"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm outline-none font-medium placeholder:font-normal"
                                 placeholder="optional@email.com"
                             />
-                            <p className="text-xs text-gray-400 mt-1">Receive appointment confirmation via email</p>
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Preferred Date</label>
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Preferred Date</label>
                                 <input
                                     type="date"
                                     required
@@ -299,20 +301,13 @@ export default function AppointmentForm() {
                                     onChange={handleDateChange}
                                     min={minDateValue}
                                     max={maxDateValue}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none text-gray-700"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm outline-none font-medium text-slate-700"
                                 />
-                                {formData.date && (
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        {isSunday(formData.date) ? '❌ Closed on Sundays' :
-                                            isSaturday(formData.date) ? '📅 Saturday (Morning only)' :
-                                                '📅 Weekday (Morning & Evening available)'}
-                                    </p>
-                                )}
                             </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Preferred Time</label>
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Preferred Shift</label>
                                 {closedMessage ? (
-                                    <div className="w-full bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm">
+                                    <div className="w-full bg-rose-50 border border-rose-200 rounded-2xl px-5 py-4 text-rose-600 text-sm font-bold">
                                         {closedMessage}
                                     </div>
                                 ) : (
@@ -320,7 +315,7 @@ export default function AppointmentForm() {
                                         required
                                         value={formData.shift}
                                         onChange={handleShiftChange}
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none text-gray-700"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm outline-none font-medium text-slate-700 appearance-none pointer-events-auto cursor-pointer"
                                     >
                                         <option value="">Select a time</option>
                                         {availableShifts.map(shift => (
@@ -328,76 +323,64 @@ export default function AppointmentForm() {
                                         ))}
                                     </select>
                                 )}
-                                {formData.shift && selectedShiftInfo && !closedMessage && (
-                                    <p className="text-xs text-green-600 mt-1">{getShiftTimeDisplay()}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Preferred Slot</label>
-                                {closedMessage ? (
-                                    <div className="w-full bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm">
-                                        {closedMessage}
-                                    </div>
-                                ) : (
-                                    <select
-                                        value={formData.preferredTime}
-                                        onChange={handleTimeChange}
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none text-gray-700"
-                                    >
-                                        <option value="">Select a slot (optional)</option>
-                                        {timeSlots.map(slot => (
-                                            <option key={slot.value} value={slot.value}>{slot.label}</option>
-                                        ))}
-                                    </select>
-                                )}
-                                {formData.shift && !closedMessage && (
-                                    <p className="text-xs text-gray-400 mt-1">Optional - Our staff may adjust timing</p>
-                                )}
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Reason for Visit (Optional)</label>
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Preferred Slot (Optional)</label>
+                            <select
+                                value={formData.preferredTime}
+                                onChange={handleTimeChange}
+                                disabled={!formData.shift || !!closedMessage}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm outline-none font-medium text-slate-700 disabled:opacity-50 appearance-none cursor-pointer"
+                            >
+                                <option value="">Any time during {formData.shift || 'selected shift'}</option>
+                                {timeSlots.map(slot => (
+                                    <option key={slot.value} value={slot.value}>{slot.label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Symptoms or Notes</label>
                             <textarea
                                 rows="3"
                                 value={formData.message}
                                 onChange={e => setFormData({ ...formData, message: e.target.value })}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none resize-none"
-                                placeholder="Briefly describe your symptoms or reason for visit..."
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm outline-none font-medium placeholder:font-normal resize-none"
+                                placeholder="Briefly describe your symptoms..."
                                 maxLength={500}
                             />
-                            <p className="text-xs text-gray-400 mt-1">{formData.message.length}/500</p>
                         </div>
 
                         {errorMessage && (
-                            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                                <p className="text-red-600 text-sm">{errorMessage}</p>
+                            <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">
+                                <p className="text-rose-600 text-sm font-bold">{errorMessage}</p>
                             </div>
                         )}
 
                         <button
                             type="submit"
                             disabled={status === 'loading' || isSunday(formData.date) || !formData.shift || !formData.date}
-                            className="w-full bg-black text-white rounded-xl py-4 font-medium text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                            className="w-full bg-primary-600 text-white rounded-2xl py-5 font-black text-sm hover:bg-primary-700 shadow-xl shadow-primary-200 hover:shadow-primary-300 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0 mt-2 tracking-widest uppercase"
                         >
                             {status === 'loading' ? (
                                 <span className="flex items-center justify-center gap-2">
-                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    Submitting...
+                                    Processing...
                                 </span>
-                            ) : 'Request Appointment'}
+                            ) : 'Book Appointment'}
                         </button>
-
-                        <p className="text-xs text-gray-400 text-center">
-                            By submitting, you agree to be contacted regarding your appointment request.
-                        </p>
                     </form>
                 </div>
 
             </div>
+            <p className="text-xs text-slate-400 mt-12 text-center font-medium">
+                By submitting, you agree to be contacted regarding your appointment request.
+            </p>
         </section>
     );
 }

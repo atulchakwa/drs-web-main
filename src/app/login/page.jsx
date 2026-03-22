@@ -49,113 +49,117 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden font-sans selection:bg-indigo-100 selection:text-indigo-900 z-0">
-            {/* Background Decorations */}
-            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent blur-3xl -z-10 rounded-b-full"></div>
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-emerald-500/10 to-transparent blur-3xl -z-10 rounded-t-full"></div>
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-4 selection:bg-primary-100 selection:text-primary-900">
+
+            {/* Dynamic Background Elements */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-100/40 rounded-full blur-[120px] -z-10 animate-pulse"></div>
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[120px] -z-10 animate-pulse" style={{ animationDelay: '2s' }}></div>
 
             <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.5, type: "spring", bounce: 0.4 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 className="w-full max-w-md relative z-10"
             >
                 {/* Back Link */}
-                <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors mb-6 group">
+                <Link href="/" className="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-primary-600 transition-all mb-8 uppercase tracking-[0.2em] group">
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     Back to Website
                 </Link>
 
-                {/* Login Card */}
-                <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-indigo-900/5 border border-white/60 p-8 sm:p-10 relative overflow-hidden">
+                <div className="bg-white rounded-5xl p-8 md:p-12 shadow-2xl shadow-primary-900/10 border border-slate-100 relative overflow-hidden">
 
-                    {/* Header */}
-                    <div className="text-center mb-10">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-50 to-white text-indigo-600 mb-5 shadow-sm border border-indigo-100/50">
+                    {/* Interior gradient accent */}
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-400 via-primary-600 to-primary-400"></div>
+
+                    <div className="flex flex-col items-center mb-10">
+                        <motion.div
+                            whileHover={{ rotate: 10, scale: 1.1 }}
+                            className="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-xl shadow-primary-200"
+                        >
                             <ShieldCheck className="w-8 h-8" />
-                        </div>
-                        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Admin Portal</h1>
-                        <p className="text-sm font-medium text-slate-500 mt-2">Dr. Rajesh Sharma Clinic</p>
+                        </motion.div>
+                        <h1 className="text-3xl font-black text-secondary tracking-tight mb-2">Admin Portal</h1>
+                        <div className="h-1 w-12 bg-primary-200 rounded-full"></div>
+                        <p className="text-slate-400 font-bold mt-4 uppercase tracking-[0.2em] text-[10px]">Secure Access Only</p>
                     </div>
 
-                    {/* Error Message */}
-                    <AnimatePresence>
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0, y: -10 }}
-                                animate={{ opacity: 1, height: "auto", y: 0 }}
-                                exit={{ opacity: 0, height: 0, y: -10 }}
-                                className="overflow-hidden mb-6"
-                            >
-                                <div className="bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3.5 rounded-xl flex items-center gap-3 shadow-sm shadow-rose-100/50">
-                                    <AlertCircle className="w-5 h-5 shrink-0" />
-                                    <span className="text-sm font-bold">{error}</span>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-bold text-slate-700 ml-1">Email Address</label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
-                                    <Mail className="w-5 h-5" />
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Email Address</label>
+                            <div className="relative group/input">
+                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-primary-600 transition-colors">
+                                    <Mail className="w-4 h-4" />
                                 </div>
                                 <input
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl text-slate-900 font-medium placeholder:font-normal placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
-                                    placeholder="admin@example.com"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm outline-none font-medium placeholder:text-slate-300"
+                                    placeholder="admin@clinic.com"
                                     autoComplete="email"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-bold text-slate-700 ml-1">Password</label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
-                                    <Lock className="w-5 h-5" />
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Password</label>
+                            <div className="relative group/input">
+                                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-primary-600 transition-colors">
+                                    <Lock className="w-4 h-4" />
                                 </div>
                                 <input
                                     type="password"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50/50 border border-slate-200 rounded-xl text-slate-900 font-medium placeholder:font-normal placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm outline-none font-medium placeholder:text-slate-300"
                                     placeholder="••••••••"
+                                    autoComplete="current-password"
                                 />
                             </div>
                         </div>
 
-                        <div className="pt-4">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="relative w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed transition-all overflow-hidden"
-                            >
-                                <span className="relative flex items-center justify-center gap-2 z-10">
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                            Authenticating...
-                                        </>
-                                    ) : (
-                                        "Sign In to Dashboard"
-                                    )}
+                        <AnimatePresence>
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0, y: -10 }}
+                                    animate={{ opacity: 1, height: "auto", y: 0 }}
+                                    exit={{ opacity: 0, height: 0, y: -10 }}
+                                    className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 overflow-hidden"
+                                >
+                                    <AlertCircle className="w-4 h-4 shrink-0" />
+                                    {error}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-primary-600 text-white rounded-2xl py-5 font-black text-sm hover:bg-primary-700 shadow-xl shadow-primary-200 hover:shadow-primary-300 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0 tracking-widest uppercase flex items-center justify-center gap-3 group"
+                        >
+                            {loading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    Sign In to Dashboard
+                                    <Loader2 className="w-4 h-4 animate-spin hidden" id="spinner-hack" />
                                 </span>
-                            </button>
-                        </div>
+                            )}
+                        </button>
                     </form>
+
+                    <div className="mt-10 text-center">
+                        <Link href="/" className="text-[10px] font-bold text-slate-400 hover:text-primary-600 transition tracking-[0.2em] uppercase">
+                            ← Return to Website
+                        </Link>
+                    </div>
                 </div>
 
-                {/* Footer Footer */}
-                <p className="text-center text-xs font-semibold text-slate-400 mt-8">
-                    &copy; {new Date().getFullYear()} Dr. Rajesh Sharma Clinic.<br />All rights reserved.
+                <p className="text-center text-slate-400 text-[10px] font-medium mt-8 tracking-widest uppercase opacity-60">
+                    &copy; {new Date().getFullYear()} Dr. Rajesh Sharma Clinic. All Rights Reserved.
                 </p>
             </motion.div>
         </div>

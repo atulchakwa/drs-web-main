@@ -88,12 +88,12 @@ export default function ServicesGrid() {
         <section className="w-full relative" id="services">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
                 <div>
-                    <h2 className="text-4xl md:text-5xl font-black mb-4 text-slate-900 tracking-tight">
-                        Clinical <span className="text-indigo-600">Services</span>
+                    <h2 className="text-4xl md:text-5xl font-black mb-4 text-secondary tracking-tight">
+                        Clinical <span className="text-primary-600">Services</span>
                     </h2>
                     <p className="text-slate-600 max-w-xl font-medium text-lg">Targeted, evidence-based treatments designed around your specific medical requirements.</p>
                 </div>
-                <a href="#appointment" className="group inline-flex items-center gap-2 text-sm font-bold text-slate-800 hover:text-indigo-600 transition-colors bg-white border-2 border-slate-200 px-6 py-3 rounded-xl shadow-sm hover:border-indigo-200 hover:bg-indigo-50">
+                <a href="#appointment" className="group inline-flex items-center gap-2 text-sm font-bold text-secondary hover:text-primary-600 transition-colors bg-white border-2 border-slate-200 px-6 py-3 rounded-xl shadow-sm hover:border-primary-200 hover:bg-primary-50">
                     Book a service <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </a>
             </div>
@@ -112,10 +112,10 @@ export default function ServicesGrid() {
                             variants={cardVariants}
                             key={service.id}
                             onClick={() => setSelectedService(service)}
-                            className="bg-white rounded-[2rem] p-8 border border-slate-100 hover:border-indigo-100 hover:shadow-2xl hover:shadow-indigo-900/10 transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col h-full"
+                            className="bg-white rounded-3xl p-8 border border-slate-100 hover:border-primary-100 hover:shadow-2xl hover:shadow-primary-900/10 transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col h-full"
                         >
                             {/* Number background */}
-                            <div className="absolute top-4 right-6 text-slate-100 font-black text-6xl group-hover:text-indigo-50 transition-colors duration-500 z-0">
+                            <div className="absolute top-4 right-6 text-slate-100 font-black text-6xl group-hover:text-primary-50 transition-colors duration-500 z-0">
                                 0{idx + 1}
                             </div>
 
@@ -123,10 +123,10 @@ export default function ServicesGrid() {
                                 <Icon className="w-7 h-7" />
                             </div>
 
-                            <h3 className="text-2xl font-bold text-slate-900 mb-3 relative z-10 group-hover:text-indigo-600 transition-colors">{service.title}</h3>
+                            <h3 className="text-2xl font-bold text-secondary mb-3 relative z-10 group-hover:text-primary-600 transition-colors">{service.title}</h3>
                             <p className="text-slate-500 font-medium leading-relaxed mb-8 flex-grow relative z-10">{service.desc}</p>
 
-                            <div className="flex items-center gap-2 mt-auto relative z-10 text-slate-400 group-hover:text-indigo-600 font-bold text-sm transition-colors">
+                            <div className="flex items-center gap-2 mt-auto relative z-10 text-slate-400 group-hover:text-primary-600 font-bold text-sm transition-colors">
                                 View details <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </div>
                         </motion.div>
@@ -147,7 +147,7 @@ export default function ServicesGrid() {
                                 exit={{ opacity: 0 }}
                                 transition={{ duration: 0.3 }}
                                 onClick={() => setSelectedService(null)}
-                                className="absolute inset-0 bg-slate-900/40 backdrop-blur-md cursor-pointer"
+                                className="absolute inset-0 bg-secondary/40 backdrop-blur-md cursor-pointer"
                             />
 
                             {/* Modal Content container */}
@@ -156,7 +156,7 @@ export default function ServicesGrid() {
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                                className="bg-white relative z-10 w-full max-w-2xl rounded-[2.5rem] p-8 md:p-12 shadow-2xl overflow-hidden cursor-default border border-white"
+                                className="bg-white relative z-10 w-full max-w-2xl rounded-5xl p-8 md:p-12 shadow-2xl overflow-hidden cursor-default border border-white"
                             >
                                 <button
                                     onClick={() => setSelectedService(null)}
@@ -166,11 +166,11 @@ export default function ServicesGrid() {
                                     <X className="w-5 h-5" />
                                 </button>
 
-                                <div className={`inline-flex items-center justify-center w-20 h-20 rounded-[2rem] ${selectedService.bgColor} ${selectedService.color} mb-8 shadow-sm border border-black/5`}>
+                                <div className={`inline-flex items-center justify-center w-20 h-20 rounded-3xl ${selectedService.bgColor} ${selectedService.color} mb-8 shadow-sm border border-black/5`}>
                                     <ModalIcon className="w-10 h-10" />
                                 </div>
 
-                                <h3 className="text-3xl md:text-4xl font-black text-slate-900 mb-6 tracking-tight pr-10">{selectedService.title}</h3>
+                                <h3 className="text-3xl md:text-4xl font-black text-secondary mb-6 tracking-tight pr-10">{selectedService.title}</h3>
                                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 mb-8">
                                     <p className="text-slate-600 leading-relaxed font-medium text-lg">
                                         {selectedService.details}
@@ -178,14 +178,14 @@ export default function ServicesGrid() {
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                                    <div className="flex items-center gap-3 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl border border-indigo-100/50">
+                                    <div className="flex items-center gap-3 bg-primary-50 text-primary-700 px-4 py-2 rounded-xl border border-primary-100/50">
                                         <Activity className="w-5 h-5" />
                                         <span className="font-bold text-sm">20-30 mins duration</span>
                                     </div>
                                     <a
                                         href="#appointment"
                                         onClick={() => setSelectedService(null)}
-                                        className="w-full sm:w-auto bg-indigo-600 text-white px-8 py-4 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-300 hover:bg-indigo-700 hover:shadow-xl hover:-translate-y-0.5 transition-all text-center flex items-center justify-center gap-2 group"
+                                        className="w-full sm:w-auto bg-primary-600 text-white px-8 py-4 rounded-2xl text-sm font-bold shadow-lg shadow-primary-300 hover:bg-primary-700 hover:shadow-xl hover:-translate-y-0.5 transition-all text-center flex items-center justify-center gap-2 group"
                                     >
                                         Book this Service
                                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
