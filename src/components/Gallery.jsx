@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 export default function Gallery() {
     const images = [
@@ -22,7 +23,7 @@ export default function Gallery() {
             <div className="grid md:grid-cols-3 gap-6">
                 {images.map((img, i) => (
                     <div key={i} className="relative h-64 md:h-80 rounded-[2rem] overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl transition duration-500">
-                        <img src={img.src} alt={img.alt} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
+                        <Image src={img.src} alt={img.alt} fill unoptimized className="object-cover group-hover:scale-110 transition duration-700" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex items-end p-6">
                             <span className="text-white font-medium text-lg">{img.alt}</span>
                         </div>

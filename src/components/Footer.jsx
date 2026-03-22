@@ -6,15 +6,15 @@ export default function Footer() {
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 
                 <div className="flex flex-col md:flex-row items-center gap-6">
-                    <div className="text-2xl font-medium tracking-tight text-[#1A1A1A]">Docthea</div>
-                    <p className="text-xs text-gray-400 font-medium">© 2026 Docthea Medical. All rights reserved.</p>
+                    <div className="text-2xl font-medium tracking-tight text-[#1A1A1A]">Dr. Rajesh Sharma</div>
+                    <p className="text-xs text-gray-400 font-medium">© 2026 Dr. Rajesh Sharma Clinic. All rights reserved.</p>
                 </div>
 
                 <div className="flex gap-6 text-sm text-gray-500 font-medium">
                     <Link href="/#services" className="hover:text-gray-900 transition">Services</Link>
                     <Link href="/#appointment" className="hover:text-gray-900 transition">Book Appointment</Link>
                     <Link href="/#timings" className="hover:text-gray-900 transition">Timings</Link>
-                    <Link href="/admin/login" className="hover:text-gray-900 transition">Admin Portal</Link>
+                    <Link href="/login" className="hover:text-gray-900 transition">Admin Portal</Link>
                 </div>
 
                 <div className="flex items-center gap-4">

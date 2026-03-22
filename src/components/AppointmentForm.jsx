@@ -17,6 +17,20 @@ const SHIFT_OPTIONS = {
     'Evening (4 PM - 8 PM)': { hours: '16:00 - 20:00', type: 'evening', days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] }
 };
 
+const getDayOfWeek = (dateStr) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return days[date.getDay()];
+};
+
+const isSunday = (dateStr) => getDayOfWeek(dateStr) === 'sunday';
+const isSaturday = (dateStr) => getDayOfWeek(dateStr) === 'saturday';
+const isWeekday = (dateStr) => {
+    const day = getDayOfWeek(dateStr);
+    return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(day);
+};
+
 export default function AppointmentForm() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -24,25 +38,51 @@ export default function AppointmentForm() {
     const maxDate = new Date(today);
     maxDate.setDate(maxDate.getDate() + 60);
     const maxDateValue = maxDate.toISOString().split('T')[0];
-    
-    const [formData, setFormData] = useState({ name: '', phone: '', email: '', date: '', shift: 'Morning (9 AM - 1 PM)', message: '' });
+
+    const [formData, setFormData] = useState({ 
+        name: '', 
+        phone: '', 
+        email: '', 
+        date: '', 
+        shift: 'Morning (9 AM - 1 PM)', 
+        preferredTime: '', 
+        message: '' 
+    });
     const [status, setStatus] = useState('idle');
     const [errorMessage, setErrorMessage] = useState('');
     const clinicPhone = process.env.NEXT_PUBLIC_CLINIC_PHONE || '+919876543210';
 
-    const getDayOfWeek = (dateStr) => {
-        if (!dateStr) return null;
-        const date = new Date(dateStr);
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        return days[date.getDay()];
+    const getTimeSlots = () => {
+        if (!formData.shift) return [];
+        
+        const slots = [];
+        const shiftInfo = SHIFT_OPTIONS[formData.shift];
+        if (!shiftInfo) return [];
+
+        const [startHour, startMin] = shiftInfo.hours.split(' - ')[0].split(' ')[0].split(':');
+        const [endHour, endMin] = shiftInfo.hours.split(' - ')[1].split(' ')[0].split(':');
+        
+        let start = parseInt(startHour);
+        const end = parseInt(endHour);
+        const isPM = shiftInfo.hours.includes('PM') && end !== 12;
+        
+        if (isPM && start !== 12) start += 12;
+        if (shiftInfo.hours.includes('AM') && end === 12) start += 12;
+
+        for (let h = start; h < end; h++) {
+            for (let m = 0; m < 60; m += 30) {
+                const hour24 = h;
+                const hour12 = hour24 > 12 ? hour24 - 12 : (hour24 === 0 ? 12 : hour24);
+                const ampm = hour24 >= 12 ? 'PM' : 'AM';
+                const time = `${hour12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                const displayTime = `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
+                slots.push({ value: time, label: displayTime });
+            }
+        }
+        return slots;
     };
 
-    const isSunday = (dateStr) => getDayOfWeek(dateStr) === 'sunday';
-    const isSaturday = (dateStr) => getDayOfWeek(dateStr) === 'saturday';
-    const isWeekday = (dateStr) => {
-        const day = getDayOfWeek(dateStr);
-        return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(day);
-    };
+    const timeSlots = getTimeSlots();
 
     const availableShifts = useMemo(() => {
         if (!formData.date) return Object.keys(SHIFT_OPTIONS);
@@ -77,20 +117,20 @@ export default function AppointmentForm() {
 
     const handleDateChange = (e) => {
         const selectedDate = e.target.value;
-        
+
         if (isSunday(selectedDate)) {
             setErrorMessage('Clinic is closed on Sundays. Please select another date.');
             setFormData({ ...formData, date: selectedDate, shift: '' });
             return;
         }
-        
+
         setErrorMessage('');
-        
+
         let newShift = formData.shift;
         if (isSaturday(selectedDate) && formData.shift === 'Evening (4 PM - 8 PM)') {
             newShift = 'Morning (9 AM - 1 PM)';
         }
-        
+
         setFormData({ ...formData, date: selectedDate, shift: newShift });
     };
 
@@ -101,7 +141,11 @@ export default function AppointmentForm() {
             return;
         }
         setErrorMessage('');
-        setFormData({ ...formData, shift: newShift });
+        setFormData({ ...formData, shift: newShift, preferredTime: '' });
+    };
+
+    const handleTimeChange = (e) => {
+        setFormData({ ...formData, preferredTime: e.target.value });
     };
 
     const handleSubmit = async (e) => {
@@ -135,9 +179,9 @@ export default function AppointmentForm() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-            
+
             const data = await res.json();
-            
+
             if (res.ok && data.success) {
                 setStatus('success');
                 setFormData({ name: '', phone: '', email: '', date: '', shift: 'Morning (9 AM - 1 PM)', message: '' });
@@ -199,7 +243,8 @@ export default function AppointmentForm() {
                             <p className="text-gray-500 font-light max-w-sm mb-4">Your request has been received.</p>
                             <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 mb-6">
                                 <p><strong>Date:</strong> {formData.date}</p>
-                                <p><strong>Time:</strong> {formData.shift}</p>
+                                <p><strong>Shift:</strong> {formData.shift}</p>
+                                {formData.preferredTime && <p><strong>Preferred Time:</strong> {formData.preferredTime}</p>}
                             </div>
                             <p className="text-gray-500 font-light max-w-sm mb-6">Our staff will contact you shortly to confirm your slot.</p>
                             <button onClick={() => setStatus('idle')} className="text-sm font-semibold text-black border-b border-black pb-1 hover:text-gray-600 transition">Book another</button>
@@ -210,35 +255,35 @@ export default function AppointmentForm() {
                         <div className="grid md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Full Name</label>
-                                <input 
-                                    type="text" 
-                                    required 
-                                    value={formData.name} 
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none" 
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none"
                                     placeholder="Enter your name"
                                     maxLength={100}
                                 />
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Phone Number</label>
-                                <input 
-                                    type="tel" 
-                                    required 
-                                    value={formData.phone} 
+                                <input
+                                    type="tel"
+                                    required
+                                    value={formData.phone}
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none" 
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none"
                                     placeholder="+91 98765 43210"
                                 />
                             </div>
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Email (for confirmation)</label>
-                            <input 
-                                type="email" 
-                                value={formData.email} 
+                            <input
+                                type="email"
+                                value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none" 
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none"
                                 placeholder="optional@email.com"
                             />
                             <p className="text-xs text-gray-400 mt-1">Receive appointment confirmation via email</p>
@@ -247,10 +292,10 @@ export default function AppointmentForm() {
                         <div className="grid md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Preferred Date</label>
-                                <input 
-                                    type="date" 
-                                    required 
-                                    value={formData.date} 
+                                <input
+                                    type="date"
+                                    required
+                                    value={formData.date}
                                     onChange={handleDateChange}
                                     min={minDateValue}
                                     max={maxDateValue}
@@ -258,9 +303,9 @@ export default function AppointmentForm() {
                                 />
                                 {formData.date && (
                                     <p className="text-xs text-gray-500 mt-1">
-                                        {isSunday(formData.date) ? '❌ Closed on Sundays' : 
-                                         isSaturday(formData.date) ? '📅 Saturday (Morning only)' : 
-                                         '📅 Weekday (Morning & Evening available)'}
+                                        {isSunday(formData.date) ? '❌ Closed on Sundays' :
+                                            isSaturday(formData.date) ? '📅 Saturday (Morning only)' :
+                                                '📅 Weekday (Morning & Evening available)'}
                                     </p>
                                 )}
                             </div>
@@ -271,9 +316,9 @@ export default function AppointmentForm() {
                                         {closedMessage}
                                     </div>
                                 ) : (
-                                    <select 
-                                        required 
-                                        value={formData.shift} 
+                                    <select
+                                        required
+                                        value={formData.shift}
                                         onChange={handleShiftChange}
                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none text-gray-700"
                                     >
@@ -287,15 +332,37 @@ export default function AppointmentForm() {
                                     <p className="text-xs text-green-600 mt-1">{getShiftTimeDisplay()}</p>
                                 )}
                             </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Preferred Slot</label>
+                                {closedMessage ? (
+                                    <div className="w-full bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm">
+                                        {closedMessage}
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={formData.preferredTime}
+                                        onChange={handleTimeChange}
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none text-gray-700"
+                                    >
+                                        <option value="">Select a slot (optional)</option>
+                                        {timeSlots.map(slot => (
+                                            <option key={slot.value} value={slot.value}>{slot.label}</option>
+                                        ))}
+                                    </select>
+                                )}
+                                {formData.shift && !closedMessage && (
+                                    <p className="text-xs text-gray-400 mt-1">Optional - Our staff may adjust timing</p>
+                                )}
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-xs font-semibold text-gray-900 uppercase tracking-widest mb-2">Reason for Visit (Optional)</label>
-                            <textarea 
-                                rows="3" 
-                                value={formData.message} 
+                            <textarea
+                                rows="3"
+                                value={formData.message}
                                 onChange={e => setFormData({ ...formData, message: e.target.value })}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none resize-none" 
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-1 focus:ring-black focus:border-black transition text-sm outline-none resize-none"
                                 placeholder="Briefly describe your symptoms or reason for visit..."
                                 maxLength={500}
                             />
@@ -308,8 +375,8 @@ export default function AppointmentForm() {
                             </div>
                         )}
 
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             disabled={status === 'loading' || isSunday(formData.date) || !formData.shift || !formData.date}
                             className="w-full bg-black text-white rounded-xl py-4 font-medium text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                         >

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Appointment from "@/models/Appointment";
-import { sendAppointmentNotificationEmail, sendAppointmentConfirmationEmail } from "@/lib/mailer";
-import { rateLimit } from "@/lib/rateLimit";
+import { sendAppointmentNotificationEmail } from "@/lib/mailer";
+import { authMiddleware } from "@/lib/auth";
 
 const VALID_SHIFTS = {
     weekday: ["Morning (9 AM - 1 PM)", "Evening (4 PM - 8 PM)"],
@@ -29,17 +29,17 @@ function isValidDateForClinic(dateStr) {
     const date = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (date < today) {
         return { valid: false, error: "Cannot select past dates" };
     }
-    
+
     const dayOfWeek = date.getDay();
-    
+
     if (dayOfWeek === 0) {
         return { valid: false, error: "Clinic is closed on Sundays" };
     }
-    
+
     return { valid: true, dayOfWeek };
 }
 
@@ -47,18 +47,18 @@ function isValidShiftForDay(shift, dayOfWeek) {
     if (dayOfWeek === 0) {
         return { valid: false, error: "Clinic is closed on Sundays" };
     }
-    
+
     if (dayOfWeek === 6) {
         if (shift !== "Morning (9 AM - 1 PM)") {
             return { valid: false, error: "Saturday clinic closes at 2 PM. Only morning appointments available." };
         }
         return { valid: true };
     }
-    
+
     if (!VALID_SHIFTS.weekday.includes(shift)) {
         return { valid: false, error: "Invalid shift for this day" };
     }
-    
+
     return { valid: true };
 }
 
@@ -101,19 +101,16 @@ function validateAppointment(data) {
 
 export async function POST(req) {
     try {
-        const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-        
-        const { success, limit, remaining, reset } = await rateLimit(ip);
-        
-        if (!success) {
+        let body;
+        try {
+            body = await req.json();
+        } catch (e) {
             return NextResponse.json(
-                { success: false, error: "Too many requests. Please try again later.", retryAfter: reset },
-                { status: 429, headers: { 'X-RateLimit-Limit': limit, 'X-RateLimit-Remaining': remaining, 'X-RateLimit-Reset': reset } }
+                { success: false, error: "Invalid JSON or empty body" },
+                { status: 400 }
             );
         }
 
-        const body = await req.json();
-        
         const validationErrors = validateAppointment(body);
         if (validationErrors.length > 0) {
             return NextResponse.json(
@@ -123,26 +120,26 @@ export async function POST(req) {
         }
 
         await connectDB();
-        
+
         const existingByPhone = await Appointment.findOne({
             phone: body.phone,
             date: body.date,
             status: { $ne: 'cancelled' }
         });
-        
+
         if (existingByPhone) {
             return NextResponse.json(
                 { success: false, error: "You already have an appointment for this date. Please select a different date or call us directly." },
                 { status: 409 }
             );
         }
-        
+
         const existingBySlot = await Appointment.findOne({
             date: body.date,
             shift: body.shift,
             status: { $in: ['pending', 'confirmed'] }
         });
-        
+
         if (existingBySlot) {
             return NextResponse.json(
                 { success: false, error: "This time slot is fully booked. Please select a different time slot." },
@@ -153,35 +150,30 @@ export async function POST(req) {
         const appointment = await Appointment.create({
             name: body.name.trim(),
             phone: body.phone.trim(),
+            email: body.email?.trim() || '',
             date: body.date,
             shift: body.shift,
             shiftStart: SHIFT_HOURS[body.shift]?.start || '09:00',
             shiftEnd: SHIFT_HOURS[body.shift]?.end || '13:00',
+            preferredTime: body.preferredTime || '',
             message: body.message?.trim() || '',
             status: 'pending',
             dayOfWeek: getDayOfWeek(body.date),
             createdAt: new Date()
         });
 
+        const displayTime = body.preferredTime 
+            ? `${body.preferredTime} (within ${appointment.shift})`
+            : appointment.shift;
+
         try {
             await sendAppointmentNotificationEmail({
                 ...body,
-                appointmentId: appointment._id.toString()
+                appointmentId: appointment._id.toString(),
+                displayTime: displayTime
             });
         } catch (emailErr) {
             console.error("Failed to send clinic notification:", emailErr);
-        }
-        
-        if (body.email) {
-            try {
-                await sendAppointmentConfirmationEmail({
-                    name: appointment.name,
-                    date: appointment.date,
-                    shift: appointment.shift
-                }, body.email);
-            } catch (emailErr) {
-                console.error("Failed to send patient confirmation:", emailErr);
-            }
         }
 
         return NextResponse.json({
@@ -191,6 +183,7 @@ export async function POST(req) {
                 name: appointment.name,
                 date: appointment.date,
                 shift: appointment.shift,
+                preferredTime: appointment.preferredTime,
                 shiftTime: `${appointment.shiftStart} - ${appointment.shiftEnd}`,
                 status: appointment.status
             }
@@ -206,19 +199,24 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+    const auth = authMiddleware(req);
+    if (!auth.authorized) {
+        return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     try {
         await connectDB();
-        
+
         const { searchParams } = new URL(req.url);
         const date = searchParams.get('date');
         const status = searchParams.get('status');
-        
+
         const query = {};
         if (date) query.date = date;
         if (status) query.status = status;
-        
+
         const appointments = await Appointment.find(query).sort({ createdAt: -1 });
-        
+
         return NextResponse.json({
             success: true,
             data: appointments

@@ -2,48 +2,36 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Appointment from "@/models/Appointment";
 import { authMiddleware } from "@/lib/auth";
-import { sendAppointmentConfirmationEmail } from "@/lib/mailer";
+import { sendAppointmentStatusEmail } from "@/lib/mailer";
 
-const VALID_SHIFTS = {
+const SHIFT_HOURS = {
     "Morning (9 AM - 1 PM)": { start: "09:00", end: "13:00" },
     "Evening (4 PM - 8 PM)": { start: "16:00", end: "20:00" }
 };
 
-export async function GET(req) {
-    const auth = authMiddleware(req);
+export async function GET(request) {
+    const auth = authMiddleware(request);
     if (!auth.authorized) {
-        return NextResponse.json({ success: false, error: auth.error }, { status: 401 });
+        return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     }
     
     try {
         await connectDB();
         
-        const { searchParams } = new URL(req.url);
+        const { searchParams } = new URL(request.url);
         const date = searchParams.get("date");
         const status = searchParams.get("status");
         const phone = searchParams.get("phone");
-        const startDate = searchParams.get("startDate");
-        const endDate = searchParams.get("endDate");
-        const page = parseInt(searchParams.get("page")) || 1;
-        const limit = parseInt(searchParams.get("limit")) || 50;
         
         const query = {};
         if (date) query.date = date;
         if (status) query.status = status;
         if (phone) {
-            const cleanPhone = phone.replace(/\s+/g, '').replace(/^\+91/, '');
-            query.phone = { $regex: cleanPhone, $options: 'i' };
-        }
-        if (startDate && endDate) {
-            query.date = { $gte: startDate, $lte: endDate };
+            const cleanPhone = phone.replace(/\s+/g, '').replace(/^\+91/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            query.phone = { $regex: `^${cleanPhone}`, $options: 'i' };
         }
         
-        const skip = (page - 1) * limit;
-        
-        const [appointments, total] = await Promise.all([
-            Appointment.find(query).sort({ date: -1, shift: 1 }).skip(skip).limit(limit),
-            Appointment.countDocuments(query)
-        ]);
+        const appointments = await Appointment.find(query).sort({ date: -1, shift: 1 });
         
         const stats = await Appointment.aggregate([
             { $group: { _id: "$status", count: { $sum: 1 } } }
@@ -55,7 +43,6 @@ export async function GET(req) {
         return NextResponse.json({
             success: true,
             data: appointments,
-            pagination: { page, limit, total, pages: Math.ceil(total / limit) },
             stats: {
                 pending: statsMap.pending || 0,
                 confirmed: statsMap.confirmed || 0,
@@ -71,18 +58,17 @@ export async function GET(req) {
     }
 }
 
-export async function POST(req) {
-    const auth = authMiddleware(req);
+export async function POST(request) {
+    const auth = authMiddleware(request);
     if (!auth.authorized) {
-        return NextResponse.json({ success: false, error: auth.error }, { status: 401 });
+        return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     }
     
     try {
         await connectDB();
-        const body = await req.json();
+        const body = await request.json();
         
         const existingAppointment = await Appointment.findOne({
-            phone: body.phone,
             date: body.date,
             shift: body.shift,
             status: { $ne: 'cancelled' }
@@ -90,7 +76,7 @@ export async function POST(req) {
         
         if (existingAppointment) {
             return NextResponse.json(
-                { success: false, error: "This time slot is already booked. Please select a different slot." },
+                { success: false, error: "This time slot is already booked" },
                 { status: 409 }
             );
         }
@@ -100,21 +86,86 @@ export async function POST(req) {
             phone: body.phone.trim(),
             date: body.date,
             shift: body.shift,
-            shiftStart: VALID_SHIFTS[body.shift]?.start || '09:00',
-            shiftEnd: VALID_SHIFTS[body.shift]?.end || '13:00',
+            shiftStart: SHIFT_HOURS[body.shift]?.start || '09:00',
+            shiftEnd: SHIFT_HOURS[body.shift]?.end || '13:00',
             message: body.message?.trim() || '',
             status: body.status || 'pending',
-            dayOfWeek: new Date(body.date).getDay(),
-            notes: body.notes || ''
+            dayOfWeek: new Date(body.date + 'T00:00:00').getDay()
         });
         
-        return NextResponse.json({
-            success: true,
-            data: appointment
-        }, { status: 201 });
+        return NextResponse.json({ success: true, data: appointment }, { status: 201 });
         
     } catch (err) {
         console.error("Failed to create appointment:", err);
+        return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    }
+}
+
+export async function PATCH(request) {
+    const auth = authMiddleware(request);
+    if (!auth.authorized) {
+        return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+    
+    try {
+        await connectDB();
+        const body = await request.json();
+        const { id, status, notes, shiftStart, shiftEnd } = body;
+        
+        if (!id) {
+            return NextResponse.json({ success: false, error: "Appointment ID is required" }, { status: 400 });
+        }
+        
+        const appointment = await Appointment.findById(id);
+        if (!appointment) {
+            return NextResponse.json({ success: false, error: "Appointment not found" }, { status: 404 });
+        }
+        
+        const previousStatus = appointment.status;
+        
+        const updateData = {};
+        if (status) {
+            updateData.status = status;
+            if (status === 'confirmed') {
+                updateData.confirmedAt = new Date();
+                updateData.confirmedTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+            } else if (status === 'cancelled') {
+                updateData.cancelledAt = new Date();
+            }
+        }
+        if (notes !== undefined) updateData.notes = notes;
+        if (shiftStart) updateData.shiftStart = shiftStart;
+        if (shiftEnd) updateData.shiftEnd = shiftEnd;
+        
+        const updatedAppointment = await Appointment.findByIdAndUpdate(
+            id,
+            { $set: updateData },
+            { new: true }
+        );
+        
+        if (status && appointment.email) {
+            try {
+                await sendAppointmentStatusEmail({
+                    name: updatedAppointment.name,
+                    date: updatedAppointment.date,
+                    shift: updatedAppointment.shift,
+                    shiftStart: updatedAppointment.shiftStart,
+                    shiftEnd: updatedAppointment.shiftEnd
+                }, appointment.email, status);
+                
+                if (status === 'confirmed') {
+                    await Appointment.findByIdAndUpdate(id, { confirmationEmailSent: true });
+                }
+                console.log(`Status update email (${status}) sent to ${appointment.email}`);
+            } catch (emailErr) {
+                console.error(`Failed to send ${status} email:`, emailErr);
+            }
+        }
+        
+        return NextResponse.json({ success: true, data: updatedAppointment });
+        
+    } catch (err) {
+        console.error("Failed to update appointment:", err);
         return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
     }
 }

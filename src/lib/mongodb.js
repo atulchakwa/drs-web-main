@@ -16,14 +16,13 @@ export async function connectDB() {
     if (cached.conn) return cached.conn;
 
     if (!cached.promise) {
-
         cached.promise = mongoose.connect(MONGO_URI, {
             bufferCommands: false,
         });
-
     }
 
-    cached.conn = await cached.promise;
+    const conn = await cached.promise;
+    if (!cached.conn) cached.conn = conn;
 
     return cached.conn;
 }

@@ -13,6 +13,11 @@ const AppointmentSchema = new mongoose.Schema({
         required: [true, 'Phone number is required'],
         trim: true
     },
+    email: {
+        type: String,
+        trim: true,
+        lowercase: true
+    },
     date: {
         type: String,
         required: [true, 'Date is required']
@@ -30,6 +35,11 @@ const AppointmentSchema = new mongoose.Schema({
         type: String,
         default: '13:00'
     },
+    preferredTime: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     dayOfWeek: {
         type: Number,
         min: 0,
@@ -46,13 +56,21 @@ const AppointmentSchema = new mongoose.Schema({
         default: 'pending'
     },
     confirmedAt: Date,
+    confirmedTime: {
+        type: String,
+        trim: true
+    },
     cancelledAt: Date,
     notes: {
         type: String,
         trim: true
+    },
+    confirmationEmailSent: {
+        type: Boolean,
+        default: false
     }
-}, { 
-    timestamps: true 
+}, {
+    timestamps: true
 });
 
 AppointmentSchema.index({ date: 1, shift: 1, status: 1 });

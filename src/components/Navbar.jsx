@@ -13,7 +13,7 @@ export default function Navbar() {
           Care Services
         </Link>
         <Link href="/#timings" className="hover:text-black transition py-1">Timings</Link>
-        <Link href="/admin/login" className="text-gray-400 hover:text-black transition py-1 text-xs">Admin</Link>
+        <Link href="/login" className="text-gray-400 hover:text-black transition py-1 text-xs">Admin</Link>
       </div>
 
       <Link href="/#appointment" className="bg-black text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition shadow-sm hover:-translate-y-0.5 transform duration-200">
