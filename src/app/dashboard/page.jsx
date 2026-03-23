@@ -425,22 +425,22 @@ export default function DashboardPage() {
                                 {/* Actions Section */}
                                 <div className="border-t border-slate-200 pt-4">
                                     {modal.data.status === 'pending' && (
-                                        <div className="mb-3 bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center gap-3">
+                                        <div className="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col sm:flex-row sm:items-end gap-3">
                                             <div className="flex-1">
-                                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1">
                                                     Assign Time
                                                 </label>
                                                 <input
                                                     type="time"
                                                     value={confirmTime}
                                                     onChange={(e) => setConfirmTime(e.target.value)}
-                                                    className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
                                                 />
                                             </div>
                                             <button
                                                 onClick={() => updateStatus(modal.data._id, "confirmed")}
                                                 disabled={isUpdating}
-                                                className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold rounded-lg text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                                                className="w-full sm:w-auto h-10 px-8 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold rounded-lg text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
                                             >
                                                 {isUpdating ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "Confirm"}
                                             </button>
@@ -460,21 +460,21 @@ export default function DashboardPage() {
                                             <textarea
                                                 value={modal.cancelReason}
                                                 onChange={(e) => setModal({ ...modal, cancelReason: e.target.value })}
-                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 min-h-[60px] text-xs transition-all"
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 min-h-[70px] text-xs transition-all"
                                                 placeholder="Reason (Optional)..."
                                             />
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => updateStatus(modal.data._id, "cancelled", { cancellationReason: modal.cancelReason, cancelledBy: 'doctor' })}
                                                     disabled={isUpdating}
-                                                    className="flex-1 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-md active:scale-95"
+                                                    className="flex-2 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white font-bold py-2.5 rounded-lg text-xs transition-all shadow-md active:scale-95"
                                                 >
                                                     Confirm Cancel
                                                 </button>
                                                 <button
                                                     onClick={() => setModal({ ...modal, isCancelling: false })}
                                                     disabled={isUpdating}
-                                                    className="px-4 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold py-2 rounded-lg text-xs transition-all"
+                                                    className="flex-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold py-2.5 rounded-lg text-xs transition-all"
                                                 >
                                                     Back
                                                 </button>
@@ -485,12 +485,12 @@ export default function DashboardPage() {
                                             <p className="text-xs font-medium text-slate-500 italic">No further actions available.</p>
                                         </div>
                                     ) : (
-                                        <div className="flex gap-2">
+                                        <div className="grid grid-cols-3 gap-2">
                                             {modal.data.status !== 'completed' && (
                                                 <button
                                                     onClick={() => updateStatus(modal.data._id, "completed")}
                                                     disabled={isUpdating}
-                                                    className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-bold py-2.5 rounded-lg text-xs transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                                                    className="col-span-2 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-bold py-3 rounded-lg text-xs sm:text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
                                                 >
                                                     {isUpdating ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "Mark Completed"}
                                                 </button>
@@ -499,7 +499,7 @@ export default function DashboardPage() {
                                                 <button
                                                     onClick={() => setModal({ ...modal, isCancelling: true })}
                                                     disabled={isUpdating}
-                                                    className="px-4 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 font-bold py-2.5 rounded-lg text-xs transition-colors"
+                                                    className="col-span-1 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 font-bold py-3 rounded-lg text-xs sm:text-sm transition-colors"
                                                 >
                                                     Cancel
                                                 </button>
