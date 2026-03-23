@@ -21,13 +21,17 @@ function formatDate(dateStr) {
     });
 }
 
+let transporter = null;
+
 function createTransporter() {
+    if (transporter) return transporter;
+
     const port = parseInt(process.env.SMTP_PORT || '587');
     const isSecure = port === 465;
 
     console.log(`Creating transporter: host=${process.env.SMTP_HOST}, port=${port}, secure=${isSecure}`);
 
-    return nodemailer.createTransport({
+    transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: port,
         secure: isSecure,
@@ -38,8 +42,14 @@ function createTransporter() {
         tls: {
             // Do not fail on invalid certs
             rejectUnauthorized: false
-        }
+        },
+        // Pool settings for performance
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100
     });
+
+    return transporter;
 }
 
 export async function sendVerificationEmail(email, token) {

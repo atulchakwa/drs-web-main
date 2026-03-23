@@ -239,38 +239,42 @@ export async function POST(req) {
             ? `${body.preferredTime} (within ${appointment.shift})`
             : appointment.shift;
 
-        // Send notification email to clinic
-        try {
-            await sendAppointmentNotificationEmail({
-                name: appointment.name,
-                phone: appointment.phone,
-                email: appointment.email,
-                date: appointment.date,
-                shift: appointment.shift,
-                preferredTime: appointment.preferredTime,
-                message: appointment.message,
-                appointmentId: appointment._id.toString(),
-                displayTime: displayTime
-            });
-            console.log(`Notification email sent to clinic for ${appointment._id}`);
-        } catch (emailErr) {
-            console.error("Failed to send clinic notification:", emailErr);
-        }
-
-        // Send acknowledgment email to patient
-        if (appointment.email) {
+        // Send notification email to clinic in background
+        (async () => {
             try {
-                const { sendAppointmentAcknowledgementEmail } = await import("@/lib/mailer");
-                await sendAppointmentAcknowledgementEmail({
+                await sendAppointmentNotificationEmail({
                     name: appointment.name,
+                    phone: appointment.phone,
+                    email: appointment.email,
                     date: appointment.date,
                     shift: appointment.shift,
-                    preferredTime: appointment.preferredTime
-                }, appointment.email);
-                console.log(`Acknowledgment email sent to patient: ${appointment.email}`);
-            } catch (ackErr) {
-                console.error("Failed to send patient acknowledgment email:", ackErr);
+                    preferredTime: appointment.preferredTime,
+                    message: appointment.message,
+                    appointmentId: appointment._id.toString(),
+                    displayTime: displayTime
+                });
+                console.log(`Notification email sent to clinic for ${appointment._id}`);
+            } catch (emailErr) {
+                console.error("Failed to send clinic notification in background:", emailErr);
             }
+        })();
+
+        // Send acknowledgment email to patient in background
+        if (appointment.email) {
+            (async () => {
+                try {
+                    const { sendAppointmentAcknowledgementEmail } = await import("@/lib/mailer");
+                    await sendAppointmentAcknowledgementEmail({
+                        name: appointment.name,
+                        date: appointment.date,
+                        shift: appointment.shift,
+                        preferredTime: appointment.preferredTime
+                    }, appointment.email);
+                    console.log(`Acknowledgment email sent to patient: ${appointment.email}`);
+                } catch (ackErr) {
+                    console.error("Failed to send patient acknowledgment email in background:", ackErr);
+                }
+            })();
         }
 
         return NextResponse.json({

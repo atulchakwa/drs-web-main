@@ -232,7 +232,7 @@ export default function AppointmentForm() {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-3xl p-8 md:p-10 relative shadow-2xl z-10">
+                <div className="bg-white rounded-3xl p-6 sm:p-8 md:p-10 relative shadow-2xl z-10">
                     {status === 'success' && (
                         <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 rounded-3xl flex flex-col items-center justify-center text-center p-8 border border-slate-100">
                             <div className="w-20 h-20 bg-accent text-white rounded-full flex items-center justify-center text-3xl mb-6 shadow-lg shadow-accent/20">✓</div>
@@ -252,7 +252,7 @@ export default function AppointmentForm() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-6 pr-8 sm:pr-0">
                         <div className="grid md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="block text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Full Name *</label>

@@ -4,7 +4,7 @@ import { Clock, MapPin, Calendar, BellRing } from 'lucide-react';
 export default function ClinicTimings() {
     return (
         <section className="w-full relative" id="timings">
-            <div className="bg-white rounded-5xl p-6 md:p-16 grid lg:grid-cols-2 gap-12 lg:gap-16 items-start border border-slate-100 shadow-2xl shadow-primary-900/5 relative overflow-hidden">
+            <div className="bg-white rounded-5xl p-6 md:p-10 grid lg:grid-cols-2 gap-12 lg:gap-16 items-start border border-slate-100 shadow-2xl shadow-primary-900/5 relative overflow-hidden">
 
                 {/* Decorative Elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2"></div>

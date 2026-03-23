@@ -36,8 +36,13 @@ export default function Home() {
           <div className="absolute top-[15%] right-[-10%] w-[40%] h-[40%] bg-accent-200/20 rounded-full blur-[120px] opacity-50 animate-pulse" style={{ animationDelay: "2s" }}></div>
           <div className="absolute bottom-[-10%] left-[10%] w-[60%] h-[50%] bg-primary-100/10 rounded-full blur-[120px] opacity-40"></div>
 
-          {/* Subtle Grid Pattern */}
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
+          {/* Subtle Grid Pattern - Using local SVG data URI to avoid 403 errors and reduce network calls */}
+          <div
+            className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+            }}
+          ></div>
         </div>
 
         <div className="max-w-7xl mx-auto w-full relative z-10">
@@ -84,7 +89,7 @@ export default function Home() {
 
                 <a
                   href={`tel:${process.env.NEXT_PUBLIC_CLINIC_PHONE || '+919876543210'}`}
-                  className="group inline-flex items-center justify-center gap-3 bg-white text-secondary border-2 border-slate-100 px-8 py-4 rounded-2xl font-bold text-lg transition-all hover:bg-slate-50 hover:border-slate-200 active:scale-95 shadow-sm"
+                  className="group inline-flex items-center justify-center gap-3 bg-white text-secondary border-2 border-slate-100 px-8 py-4 rounded-2xl font-bold text-lg transition-all hover:bg-slate-50 hover:border-slate-200 active:scale-95 shadow-sm lg:ml-2"
                 >
                   <PhoneCall className="w-5 h-5 text-primary-600 group-hover:rotate-12 transition-transform" />
                   Call Clinic
@@ -206,7 +211,9 @@ export default function Home() {
             </div>
           </section>
 
-          <AppointmentForm />
+          <div className="pb-24">
+            <AppointmentForm />
+          </div>
 
           <div className="py-12">
             <ClinicTimings />

@@ -7,16 +7,16 @@ import FloatingActions from "./FloatingActions";
 
 export default function LayoutWrapper({ children }) {
     const pathname = usePathname();
-    const isDashboard = pathname?.startsWith("/dashboard");
+    const isAuthPage = pathname?.startsWith("/login") || pathname?.startsWith("/dashboard");
 
     return (
         <>
-            {!isDashboard && <Navbar />}
+            {!isAuthPage && <Navbar />}
             <main className="w-full flex-1 flex flex-col items-center">
                 {children}
             </main>
-            {!isDashboard && <Footer />}
-            {!isDashboard && <FloatingActions />}
+            {!isAuthPage && <Footer />}
+            {!isAuthPage && <FloatingActions />}
         </>
     );
 }

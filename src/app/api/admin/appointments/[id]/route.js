@@ -126,8 +126,8 @@ export async function PUT(request, { params }) {
             }
         };
 
-        // Synchronous Notification (Await to ensure delivery, UI uses Optimistic update)
-        await sendNotification();
+        // Asynchronous Notification (Don't await to keep API fast)
+        sendNotification();
 
         return NextResponse.json({ success: true, data: appointment });
 

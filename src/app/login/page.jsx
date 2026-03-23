@@ -61,11 +61,6 @@ export default function LoginPage() {
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 className="w-full max-w-md relative z-10"
             >
-                {/* Back Link */}
-                <Link href="/" className="inline-flex items-center gap-2 text-xs font-black text-slate-400 hover:text-primary-600 transition-all mb-8 uppercase tracking-[0.2em] group">
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                    Back to Website
-                </Link>
 
                 <div className="bg-white rounded-5xl p-8 md:p-12 shadow-2xl shadow-primary-900/10 border border-slate-100 relative overflow-hidden">
 

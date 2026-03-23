@@ -106,21 +106,24 @@ export async function POST(request) {
             dayOfWeek: new Date(body.date + 'T00:00:00').getDay()
         });
 
-        // If status is confirmed, send confirmation email to patient
+        // If status is confirmed, send confirmation email to patient in background
         if (appointment.status === 'confirmed' && appointment.email) {
-            try {
-                const { sendAppointmentConfirmationEmail } = await import("@/lib/mailer");
-                await sendAppointmentConfirmationEmail({
-                    name: appointment.name,
-                    date: appointment.date,
-                    shift: appointment.shift,
-                    shiftStart: appointment.shiftStart,
-                    shiftEnd: appointment.shiftEnd
-                }, appointment.email);
-                await Appointment.findByIdAndUpdate(appointment._id, { confirmationEmailSent: true });
-            } catch (emailErr) {
-                console.error("Failed to send patient confirmation email:", emailErr);
-            }
+            (async () => {
+                try {
+                    const { sendAppointmentConfirmationEmail } = await import("@/lib/mailer");
+                    await sendAppointmentConfirmationEmail({
+                        name: appointment.name,
+                        date: appointment.date,
+                        shift: appointment.shift,
+                        shiftStart: appointment.shiftStart,
+                        shiftEnd: appointment.shiftEnd
+                    }, appointment.email);
+                    await Appointment.findByIdAndUpdate(appointment._id, { confirmationEmailSent: true });
+                    console.log(`Confirmation email sent to ${appointment.email}`);
+                } catch (emailErr) {
+                    console.error("Failed to send patient confirmation email in background:", emailErr);
+                }
+            })();
         }
 
         return NextResponse.json({ success: true, data: appointment }, { status: 201 });
@@ -174,22 +177,24 @@ export async function PATCH(request) {
         );
 
         if (status && appointment.email) {
-            try {
-                await sendAppointmentStatusEmail({
-                    name: updatedAppointment.name,
-                    date: updatedAppointment.date,
-                    shift: updatedAppointment.shift,
-                    shiftStart: updatedAppointment.shiftStart,
-                    shiftEnd: updatedAppointment.shiftEnd
-                }, appointment.email, status);
+            (async () => {
+                try {
+                    await sendAppointmentStatusEmail({
+                        name: updatedAppointment.name,
+                        date: updatedAppointment.date,
+                        shift: updatedAppointment.shift,
+                        shiftStart: updatedAppointment.shiftStart,
+                        shiftEnd: updatedAppointment.shiftEnd
+                    }, appointment.email, status);
 
-                if (status === 'confirmed') {
-                    await Appointment.findByIdAndUpdate(id, { confirmationEmailSent: true });
+                    if (status === 'confirmed') {
+                        await Appointment.findByIdAndUpdate(id, { confirmationEmailSent: true });
+                    }
+                    console.log(`Status update email (${status}) sent to ${appointment.email}`);
+                } catch (emailErr) {
+                    console.error(`Failed to send ${status} email in background:`, emailErr);
                 }
-                console.log(`Status update email (${status}) sent to ${appointment.email}`);
-            } catch (emailErr) {
-                console.error(`Failed to send ${status} email:`, emailErr);
-            }
+            })();
         }
 
         return NextResponse.json({ success: true, data: updatedAppointment });

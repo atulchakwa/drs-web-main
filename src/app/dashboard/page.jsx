@@ -382,61 +382,68 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Modal Body */}
-                            <div className="p-5 space-y-4">
-                                {/* Patient Summary */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Patient</div>
-                                        <div className="font-semibold text-slate-900 flex items-center gap-2">
-                                            <User className="w-4 h-4 text-primary-600" />
-                                            {modal.data.name}
+                            <div className="p-4 sm:p-5 space-y-3">
+                                {/* Patient Summary - More Compact Grid */}
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                                        <div className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">Patient</div>
+                                        <div className="font-bold text-slate-900 flex items-center gap-1.5 text-xs sm:text-sm">
+                                            <User className="w-3.5 h-3.5 text-primary-600 shrink-0" />
+                                            <span className="truncate">{modal.data.name}</span>
                                         </div>
                                     </div>
-                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Contact</div>
-                                        <div className="font-semibold text-slate-900 flex items-center gap-2">
-                                            <Phone className="w-4 h-4 text-primary-600" />
-                                            {modal.data.phone || 'N/A'}
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                                        <div className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">Contact</div>
+                                        <div className="font-bold text-slate-900 flex items-center gap-1.5 text-xs sm:text-sm">
+                                            <Phone className="w-3.5 h-3.5 text-primary-600 shrink-0" />
+                                            <a href={`tel:${modal.data.phone}`} className="hover:text-primary-600 transition truncate">{modal.data.phone || 'N/A'}</a>
                                         </div>
                                     </div>
-                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Date & Time</div>
-                                        <div className="font-semibold text-slate-900">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar className="w-4 h-4 text-primary-600" />
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                                        <div className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">Date & Time</div>
+                                        <div className="font-bold text-slate-900 text-xs sm:text-sm">
+                                            <div className="flex items-center gap-1.5">
+                                                <Calendar className="w-3.5 h-3.5 text-primary-600 shrink-0" />
                                                 {modal.data.date}
                                             </div>
-                                            <div className="text-xs text-slate-500 ml-6">{modal.data.shift}</div>
+                                            <div className="text-[10px] text-slate-500 ml-5 font-medium">{modal.data.shift}</div>
                                         </div>
                                     </div>
-                                    <div className="col-span-2 sm:col-span-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Current Status</div>
-                                        <div>{getStatusBadge(modal.data.status)}</div>
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex flex-col justify-between">
+                                        <div className="text-[9px] font-bold text-slate-400 uppercase mb-0.5">Status</div>
+                                        <div className="flex items-center">{getStatusBadge(modal.data.status)}</div>
                                     </div>
 
                                     {modal.data.message && (
-                                        <div className="col-span-2 bg-amber-50 p-3 rounded-lg border border-amber-100">
-                                            <div className="text-[10px] font-bold text-amber-600 uppercase mb-1">Patient Message</div>
-                                            <p className="text-sm text-slate-700 italic">"{modal.data.message}"</p>
+                                        <div className="col-span-2 bg-amber-50 p-2.5 rounded-lg border border-amber-100">
+                                            <div className="text-[9px] font-bold text-amber-600 uppercase mb-0.5">Note</div>
+                                            <p className="text-xs text-slate-700 italic leading-relaxed">"{modal.data.message}"</p>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Actions Section */}
-                                <div className="border-t border-slate-200 pt-5">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Update Status</h4>
-
+                                <div className="border-t border-slate-200 pt-4">
                                     {modal.data.status === 'pending' && (
-                                        <div className="mb-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                                Assign Time (Optional)
-                                            </label>
-                                            <input
-                                                type="time"
-                                                value={confirmTime}
-                                                onChange={(e) => setConfirmTime(e.target.value)}
-                                                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
+                                        <div className="mb-3 bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center gap-3">
+                                            <div className="flex-1">
+                                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                                                    Assign Time
+                                                </label>
+                                                <input
+                                                    type="time"
+                                                    value={confirmTime}
+                                                    onChange={(e) => setConfirmTime(e.target.value)}
+                                                    className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => updateStatus(modal.data._id, "confirmed")}
+                                                disabled={isUpdating}
+                                                className="h-10 px-6 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold rounded-lg text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                                            >
+                                                {isUpdating ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "Confirm"}
+                                            </button>
                                         </div>
                                     )}
 
@@ -444,75 +451,55 @@ export default function DashboardPage() {
                                         <motion.div
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className="space-y-4 pt-4 border-t border-slate-200"
+                                            className="space-y-3 pt-3 border-t border-slate-100"
                                         >
-                                            <div className="flex items-center gap-2 text-rose-600 mb-1">
-                                                <AlertCircle className="w-4 h-4" />
-                                                <span className="text-sm font-bold uppercase tracking-wider">Confirm Cancellation</span>
+                                            <div className="flex items-center gap-2 text-rose-600 mb-0.5">
+                                                <AlertCircle className="w-3.5 h-3.5" />
+                                                <span className="text-[10px] font-black uppercase tracking-wider">Confirm Cancellation</span>
                                             </div>
-                                            <p className="text-sm text-slate-500">
-                                                Are you sure you want to cancel this appointment? This will send a notification email to the patient.
-                                            </p>
-                                            <div className="space-y-2">
-                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reason (Optional)</label>
-                                                <textarea
-                                                    value={modal.cancelReason}
-                                                    onChange={(e) => setModal({ ...modal, cancelReason: e.target.value })}
-                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 min-h-[100px] text-sm transition-all"
-                                                    placeholder="e.g., Doctor unavailable, Clinic holiday..."
-                                                />
-                                            </div>
-                                            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                            <textarea
+                                                value={modal.cancelReason}
+                                                onChange={(e) => setModal({ ...modal, cancelReason: e.target.value })}
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 min-h-[60px] text-xs transition-all"
+                                                placeholder="Reason (Optional)..."
+                                            />
+                                            <div className="flex gap-2">
                                                 <button
                                                     onClick={() => updateStatus(modal.data._id, "cancelled", { cancellationReason: modal.cancelReason, cancelledBy: 'doctor' })}
                                                     disabled={isUpdating}
-                                                    className="flex-1 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-rose-200 active:scale-95 flex items-center justify-center gap-2"
+                                                    className="flex-1 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white font-bold py-2 rounded-lg text-xs transition-all shadow-md active:scale-95"
                                                 >
-                                                    {isUpdating ? (
-                                                        <>
-                                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                                            <span>Processing...</span>
-                                                        </>
-                                                    ) : "Yes, Cancel Appointment"}
+                                                    Confirm Cancel
                                                 </button>
                                                 <button
                                                     onClick={() => setModal({ ...modal, isCancelling: false })}
                                                     disabled={isUpdating}
-                                                    className="flex-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold py-3 rounded-xl transition-all active:scale-95"
+                                                    className="px-4 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold py-2 rounded-lg text-xs transition-all"
                                                 >
-                                                    Go Back
+                                                    Back
                                                 </button>
                                             </div>
                                         </motion.div>
                                     ) : modal.data.status === 'cancelled' || modal.data.status === 'completed' ? (
-                                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 text-center">
-                                            <p className="text-sm font-medium text-slate-500 italic">No further actions available for this record.</p>
+                                        <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 text-center">
+                                            <p className="text-xs font-medium text-slate-500 italic">No further actions available.</p>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col sm:flex-row gap-2">
-                                            {modal.data.status === 'pending' && (
-                                                <button
-                                                    onClick={() => updateStatus(modal.data._id, "confirmed")}
-                                                    disabled={isUpdating}
-                                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-                                                >
-                                                    {isUpdating ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "Confirm"}
-                                                </button>
-                                            )}
+                                        <div className="flex gap-2">
                                             {modal.data.status !== 'completed' && (
                                                 <button
                                                     onClick={() => updateStatus(modal.data._id, "completed")}
                                                     disabled={isUpdating}
-                                                    className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                                    className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-bold py-2.5 rounded-lg text-xs transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
                                                 >
-                                                    {isUpdating ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "Complete"}
+                                                    {isUpdating ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "Mark Completed"}
                                                 </button>
                                             )}
                                             {modal.data.status !== 'cancelled' && (
                                                 <button
                                                     onClick={() => setModal({ ...modal, isCancelling: true })}
                                                     disabled={isUpdating}
-                                                    className="flex-1 bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-50 font-bold py-2 rounded-lg transition-colors"
+                                                    className="px-4 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 font-bold py-2.5 rounded-lg text-xs transition-colors"
                                                 >
                                                     Cancel
                                                 </button>
@@ -524,7 +511,7 @@ export default function DashboardPage() {
 
                             {/* Modal Footer (Removed Delete/Close) */}
                             <div className="bg-slate-50 border-t border-slate-200 p-2 flex justify-center items-center">
-                                <p className="text-[10px] text-slate-400 font-medium">Click outside to dismiss</p>
+                                <p className="text-[9px] text-slate-400 font-medium">Click outside to dismiss</p>
                             </div>
                         </motion.div>
                     </div>
