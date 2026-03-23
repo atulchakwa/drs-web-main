@@ -1,15 +1,17 @@
 "use client";
 
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, PhoneCall, ShieldCheck, Clock, ArrowRight, Activity, Star } from 'lucide-react';
-import DoctorProfile from '../components/DoctorProfile';
-import ServicesGrid from '../components/ServicesGrid';
-import ClinicTimings from '../components/ClinicTimings';
-import TestimonialsSlider from '../components/TestimonialsSlider';
-import Gallery from '../components/Gallery';
-import LocationMap from '../components/LocationMap';
-import AppointmentForm from '../components/AppointmentForm';
+
+const DoctorProfile = dynamic(() => import('../components/DoctorProfile'), { ssr: true });
+const ServicesGrid = dynamic(() => import('../components/ServicesGrid'), { ssr: true });
+const ClinicTimings = dynamic(() => import('../components/ClinicTimings'), { ssr: true });
+const TestimonialsSlider = dynamic(() => import('../components/TestimonialsSlider'), { ssr: false });
+const Gallery = dynamic(() => import('../components/Gallery'), { ssr: false });
+const LocationMap = dynamic(() => import('../components/LocationMap'), { ssr: false });
+const AppointmentForm = dynamic(() => import('../components/AppointmentForm'), { ssr: true });
 
 export default function Home() {
   const containerVariants = {
@@ -112,11 +114,11 @@ export default function Home() {
               <div className="relative w-full h-full rounded-[3rem] overflow-hidden shadow-2xl border-[12px] border-white bg-slate-100">
                 <Image
                   src="/images/hero.jpg"
-                  alt="Professional Doctor"
+                  alt="Professional Doctor at Dr. Rajesh Sharma's Clinic"
                   fill
-                  unoptimized
                   className="object-cover object-top"
-                  sizes="(max-width: 1024px) 0vw, 50vw"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-secondary/40 via-transparent to-transparent"></div>
               </div>
@@ -195,9 +197,8 @@ export default function Home() {
               <div className="rounded-5xl overflow-hidden shadow-2xl border-8 border-white h-[400px] sm:h-[600px] relative group bg-primary-50">
                 <Image
                   src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=800"
-                  alt="Modern Clinic"
+                  alt="Modern Clinic Interior"
                   fill
-                  unoptimized
                   className="object-cover transform group-hover:scale-105 transition-transform duration-1000"
                 />
                 <div className="absolute inset-0 bg-primary-950/10 group-hover:bg-transparent transition-colors duration-700"></div>

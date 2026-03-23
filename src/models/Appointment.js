@@ -61,6 +61,14 @@ const AppointmentSchema = new mongoose.Schema({
         trim: true
     },
     cancelledAt: Date,
+    cancelledBy: {
+        type: String,
+        enum: ['doctor', 'patient', 'system']
+    },
+    cancellationReason: {
+        type: String,
+        trim: true
+    },
     notes: {
         type: String,
         trim: true
@@ -68,7 +76,19 @@ const AppointmentSchema = new mongoose.Schema({
     confirmationEmailSent: {
         type: Boolean,
         default: false
-    }
+    },
+    cancellationEmailSent: {
+        type: Boolean,
+        default: false
+    },
+    auditLog: [{
+        status: String,
+        previousStatus: String,
+        changedAt: { type: Date, default: Date.now },
+        changedBy: String,
+        notes: String
+    }],
+    ipAddress: String
 }, {
     timestamps: true
 });

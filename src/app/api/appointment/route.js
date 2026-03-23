@@ -15,9 +15,34 @@ const SHIFT_HOURS = {
     "Evening (4 PM - 8 PM)": { start: "16:00", end: "20:00" }
 };
 
+// Simple in-memory rate limiter
+const ipRequests = new Map();
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
+const MAX_REQUESTS_PER_HOUR = 5;
+
+function checkRateLimit(ip) {
+    const now = Date.now();
+    const userRequests = ipRequests.get(ip) || [];
+    const recentRequests = userRequests.filter(time => now - time < RATE_LIMIT_WINDOW);
+
+    if (recentRequests.length >= MAX_REQUESTS_PER_HOUR) {
+        return false;
+    }
+
+    recentRequests.push(now);
+    ipRequests.set(ip, recentRequests);
+    return true;
+}
+
 function validatePhone(phone) {
     const cleanPhone = phone?.replace(/\s+/g, '').replace(/^\+91/, '');
     return /^[6-9]\d{9}$/.test(cleanPhone);
+}
+
+function validateEmail(email) {
+    if (!email) return true;
+    const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
 function getDayOfWeek(dateStr) {
@@ -25,19 +50,44 @@ function getDayOfWeek(dateStr) {
     return date.getDay();
 }
 
-function isValidDateForClinic(dateStr) {
+function isValidDateForClinic(dateStr, shift) {
     const date = new Date(dateStr);
     const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
     today.setHours(0, 0, 0, 0);
 
     if (date < today) {
         return { valid: false, error: "Cannot select past dates" };
     }
 
+    // 60-day limit
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 60);
+    if (date > maxDate) {
+        return { valid: false, error: "Appointments can only be booked up to 60 days in advance" };
+    }
+
     const dayOfWeek = date.getDay();
 
     if (dayOfWeek === 0) {
         return { valid: false, error: "Clinic is closed on Sundays" };
+    }
+
+    // Same-day booking check
+    if (dateStr === todayStr && shift) {
+        const hours = SHIFT_HOURS[shift];
+        if (hours) {
+            const now = new Date();
+            const [startH, startM] = hours.start.split(':').map(Number);
+            const startTime = new Date();
+            startTime.setHours(startH, startM, 0, 0);
+
+            // If current time is after shift start, don't allow same-day booking for that shift
+            if (now > startTime) {
+                return { valid: false, error: `Same-day booking for ${shift} is closed. Please select another date or shift.` };
+            }
+        }
     }
 
     return { valid: true, dayOfWeek };
@@ -68,16 +118,19 @@ function validateAppointment(data) {
     if (!data.name || data.name.trim().length < 2) {
         errors.push("Name must be at least 2 characters");
     }
-    if (!data.name || data.name.length > 100) {
+    if (data.name && data.name.length > 100) {
         errors.push("Name must be less than 100 characters");
     }
     if (!validatePhone(data.phone)) {
         errors.push("Invalid phone number");
     }
+    if (data.email && !validateEmail(data.email)) {
+        errors.push("Invalid email address");
+    }
     if (!data.date) {
         errors.push("Date is required");
     } else {
-        const dateValidation = isValidDateForClinic(data.date);
+        const dateValidation = isValidDateForClinic(data.date, data.shift);
         if (!dateValidation.valid) {
             errors.push(dateValidation.error);
         } else {
@@ -100,6 +153,14 @@ function validateAppointment(data) {
 }
 
 export async function POST(req) {
+    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+    if (!checkRateLimit(ip)) {
+        return NextResponse.json(
+            { success: false, error: "Too many requests. Please try again after an hour." },
+            { status: 429 }
+        );
+    }
+
     try {
         let body;
         try {
@@ -114,35 +175,46 @@ export async function POST(req) {
         const validationErrors = validateAppointment(body);
         if (validationErrors.length > 0) {
             return NextResponse.json(
-                { success: false, error: "Validation failed", details: validationErrors },
+                { success: false, error: validationErrors[0], details: validationErrors },
                 { status: 400 }
             );
         }
 
         await connectDB();
 
+        // Check for existing appointment with same phone on same date
         const existingByPhone = await Appointment.findOne({
             phone: body.phone,
             date: body.date,
-            status: { $ne: 'cancelled' }
+            status: { $nin: ['cancelled', 'completed', 'no-show'] }
         });
 
         if (existingByPhone) {
             return NextResponse.json(
-                { success: false, error: "You already have an appointment for this date. Please select a different date or call us directly." },
+                { success: false, error: "You already have an active appointment for this date. Please select a different date or call us directly." },
                 { status: 409 }
             );
         }
 
-        const existingBySlot = await Appointment.findOne({
+        // Check if the time slot/preferred time is already booked
+        const collisionQuery = {
             date: body.date,
             shift: body.shift,
-            status: { $in: ['pending', 'confirmed'] }
-        });
+            status: { $nin: ['cancelled', 'completed', 'no-show'] }
+        };
+
+        if (body.preferredTime) {
+            collisionQuery.preferredTime = body.preferredTime;
+        }
+
+        const existingBySlot = await Appointment.findOne(collisionQuery);
 
         if (existingBySlot) {
+            const errorMsg = body.preferredTime
+                ? `The time slot ${body.preferredTime} is already booked. Please select a different time.`
+                : "This time slot is fully booked. Please select a different time slot.";
             return NextResponse.json(
-                { success: false, error: "This time slot is fully booked. Please select a different time slot." },
+                { success: false, error: errorMsg },
                 { status: 409 }
             );
         }
@@ -159,21 +231,46 @@ export async function POST(req) {
             message: body.message?.trim() || '',
             status: 'pending',
             dayOfWeek: getDayOfWeek(body.date),
+            ipAddress: ip,
             createdAt: new Date()
         });
 
-        const displayTime = body.preferredTime 
+        const displayTime = body.preferredTime
             ? `${body.preferredTime} (within ${appointment.shift})`
             : appointment.shift;
 
+        // Send notification email to clinic
         try {
             await sendAppointmentNotificationEmail({
-                ...body,
+                name: appointment.name,
+                phone: appointment.phone,
+                email: appointment.email,
+                date: appointment.date,
+                shift: appointment.shift,
+                preferredTime: appointment.preferredTime,
+                message: appointment.message,
                 appointmentId: appointment._id.toString(),
                 displayTime: displayTime
             });
+            console.log(`Notification email sent to clinic for ${appointment._id}`);
         } catch (emailErr) {
             console.error("Failed to send clinic notification:", emailErr);
+        }
+
+        // Send acknowledgment email to patient
+        if (appointment.email) {
+            try {
+                const { sendAppointmentAcknowledgementEmail } = await import("@/lib/mailer");
+                await sendAppointmentAcknowledgementEmail({
+                    name: appointment.name,
+                    date: appointment.date,
+                    shift: appointment.shift,
+                    preferredTime: appointment.preferredTime
+                }, appointment.email);
+                console.log(`Acknowledgment email sent to patient: ${appointment.email}`);
+            } catch (ackErr) {
+                console.error("Failed to send patient acknowledgment email:", ackErr);
+            }
         }
 
         return NextResponse.json({
@@ -186,13 +283,14 @@ export async function POST(req) {
                 preferredTime: appointment.preferredTime,
                 shiftTime: `${appointment.shiftStart} - ${appointment.shiftEnd}`,
                 status: appointment.status
-            }
+            },
+            message: "Appointment request submitted successfully! Your Appointment ID is: " + appointment._id
         }, { status: 201 });
 
     } catch (err) {
         console.error("Appointment creation failed:", err);
         return NextResponse.json(
-            { success: false, error: "Internal server error" },
+            { success: false, error: "Internal server error. Please try again later." },
             { status: 500 }
         );
     }

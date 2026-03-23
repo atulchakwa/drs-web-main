@@ -44,9 +44,10 @@ export default function DashboardPage() {
     const [stats, setStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState({ status: "", date: "" });
-    const [modal, setModal] = useState({ show: false, type: null, data: null });
+    const [modal, setModal] = useState({ show: false, type: null, data: null, isCancelling: false, cancelReason: "" });
     const [toast, setToast] = useState(null);
     const [confirmTime, setConfirmTime] = useState("");
+    const [isUpdating, setIsUpdating] = useState(false);
 
     useEffect(() => {
         fetch("/api/auth/me")
@@ -94,15 +95,31 @@ export default function DashboardPage() {
     };
 
     const handleModalOpen = (apt) => {
-        setModal({ show: true, data: apt });
+        setModal({ show: true, data: apt, isCancelling: false, cancelReason: "" });
         setConfirmTime(apt.confirmedTime || "");
+        setIsUpdating(false);
     };
 
-    const updateStatus = async (id, status) => {
+    const updateStatus = async (id, status, extra = {}) => {
+        if (isUpdating) return;
+
+        // Optimistic UI Update
+        const previousAppointments = [...appointments];
+        setAppointments(prev => prev.map(apt =>
+            apt._id === id ? { ...apt, status, ...extra } : apt
+        ));
+        setModal({ show: false, isCancelling: false, cancelReason: "" });
+        showToast(`Status updating to ${status}...`);
+
         try {
-            const body = { status };
+            setIsUpdating(true);
+            const body = { status, ...extra };
             if (status === 'confirmed' && confirmTime) {
                 body.confirmedTime = confirmTime;
+            }
+            if (status === 'cancelled') {
+                body.cancelledBy = 'doctor';
+                if (modal.cancelReason) body.cancellationReason = modal.cancelReason;
             }
 
             const res = await fetch(`/api/admin/appointments/${id}`, {
@@ -112,31 +129,22 @@ export default function DashboardPage() {
             });
             const data = await res.json();
             if (data.success) {
-                showToast(`Status updated to ${status}`);
-                fetchAppointments();
-                setModal({ show: false });
+                showToast(`Appointment successfully ${status}`);
+                fetchAppointments(); // Refresh to sync with server
             } else {
-                showToast(data.error, "error");
+                // Rollback on failure
+                setAppointments(previousAppointments);
+                showToast(data.error || "Update failed", "error");
             }
-        } catch {
+        } catch (err) {
+            console.error("Update failed:", err);
+            setAppointments(previousAppointments);
             showToast("Update failed", "error");
+        } finally {
+            setIsUpdating(false);
         }
     };
 
-    const deleteAppointment = async (id) => {
-        if (!confirm("Are you sure you want to delete this appointment? This action cannot be undone.")) return;
-        try {
-            const res = await fetch(`/api/admin/appointments/${id}`, { method: "DELETE" });
-            const data = await res.json();
-            if (data.success) {
-                showToast("Appointment deleted");
-                fetchAppointments();
-                setModal({ show: false });
-            }
-        } catch {
-            showToast("Delete failed", "error");
-        }
-    };
 
     const getStatusBadge = (status) => {
         const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
@@ -365,8 +373,9 @@ export default function DashboardPage() {
                                     <p className="text-sm text-slate-500">Update status and confirm scheduling</p>
                                 </div>
                                 <button
-                                    onClick={() => setModal({ show: false })}
+                                    onClick={() => setModal({ show: false, isCancelling: false })}
                                     className="p-1 hover:bg-slate-200 rounded text-slate-400 transition-colors"
+                                    aria-label="Close modal"
                                 >
                                     <XCircle className="w-5 h-5" />
                                 </button>
@@ -431,46 +440,91 @@ export default function DashboardPage() {
                                         </div>
                                     )}
 
-                                    <div className="flex flex-col sm:flex-row gap-2">
-                                        {modal.data.status !== 'confirmed' && modal.data.status !== 'completed' && (
-                                            <button
-                                                onClick={() => updateStatus(modal.data._id, "confirmed")}
-                                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg transition-colors"
-                                            >
-                                                Confirm
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => updateStatus(modal.data._id, "completed")}
-                                            className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 rounded-lg transition-colors"
+                                    {modal.data.status !== 'cancelled' && modal.data.status !== 'completed' && modal.isCancelling ? (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="space-y-4 pt-4 border-t border-slate-200"
                                         >
-                                            Complete
-                                        </button>
-                                        <button
-                                            onClick={() => updateStatus(modal.data._id, "cancelled")}
-                                            className="flex-1 bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 font-bold py-2 rounded-lg transition-colors"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
+                                            <div className="flex items-center gap-2 text-rose-600 mb-1">
+                                                <AlertCircle className="w-4 h-4" />
+                                                <span className="text-sm font-bold uppercase tracking-wider">Confirm Cancellation</span>
+                                            </div>
+                                            <p className="text-sm text-slate-500">
+                                                Are you sure you want to cancel this appointment? This will send a notification email to the patient.
+                                            </p>
+                                            <div className="space-y-2">
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reason (Optional)</label>
+                                                <textarea
+                                                    value={modal.cancelReason}
+                                                    onChange={(e) => setModal({ ...modal, cancelReason: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 min-h-[100px] text-sm transition-all"
+                                                    placeholder="e.g., Doctor unavailable, Clinic holiday..."
+                                                />
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                                <button
+                                                    onClick={() => updateStatus(modal.data._id, "cancelled", { cancellationReason: modal.cancelReason, cancelledBy: 'doctor' })}
+                                                    disabled={isUpdating}
+                                                    className="flex-1 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-rose-200 active:scale-95 flex items-center justify-center gap-2"
+                                                >
+                                                    {isUpdating ? (
+                                                        <>
+                                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                            <span>Processing...</span>
+                                                        </>
+                                                    ) : "Yes, Cancel Appointment"}
+                                                </button>
+                                                <button
+                                                    onClick={() => setModal({ ...modal, isCancelling: false })}
+                                                    disabled={isUpdating}
+                                                    className="flex-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold py-3 rounded-xl transition-all active:scale-95"
+                                                >
+                                                    Go Back
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    ) : modal.data.status === 'cancelled' || modal.data.status === 'completed' ? (
+                                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 text-center">
+                                            <p className="text-sm font-medium text-slate-500 italic">No further actions available for this record.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col sm:flex-row gap-2">
+                                            {modal.data.status === 'pending' && (
+                                                <button
+                                                    onClick={() => updateStatus(modal.data._id, "confirmed")}
+                                                    disabled={isUpdating}
+                                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    {isUpdating ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "Confirm"}
+                                                </button>
+                                            )}
+                                            {modal.data.status !== 'completed' && (
+                                                <button
+                                                    onClick={() => updateStatus(modal.data._id, "completed")}
+                                                    disabled={isUpdating}
+                                                    className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    {isUpdating ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "Complete"}
+                                                </button>
+                                            )}
+                                            {modal.data.status !== 'cancelled' && (
+                                                <button
+                                                    onClick={() => setModal({ ...modal, isCancelling: true })}
+                                                    disabled={isUpdating}
+                                                    className="flex-1 bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-50 font-bold py-2 rounded-lg transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Modal Footer */}
-                            <div className="bg-slate-50 border-t border-slate-200 p-4 px-5 flex justify-between items-center">
-                                <button
-                                    onClick={() => deleteAppointment(modal.data._id)}
-                                    className="text-rose-600 text-sm font-bold hover:underline flex items-center gap-1.5"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete Record
-                                </button>
-                                <button
-                                    onClick={() => setModal({ show: false })}
-                                    className="text-slate-500 text-sm font-bold hover:text-slate-900"
-                                >
-                                    Close
-                                </button>
+                            {/* Modal Footer (Removed Delete/Close) */}
+                            <div className="bg-slate-50 border-t border-slate-200 p-2 flex justify-center items-center">
+                                <p className="text-[10px] text-slate-400 font-medium">Click outside to dismiss</p>
                             </div>
                         </motion.div>
                     </div>

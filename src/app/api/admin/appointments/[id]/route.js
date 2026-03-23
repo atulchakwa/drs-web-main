@@ -25,19 +25,25 @@ export async function PUT(request, { params }) {
             return NextResponse.json({ success: false, error: "Appointment not found" }, { status: 404 });
         }
 
-        if (body.date && body.shift) {
-            const existing = await Appointment.findOne({
-                _id: { $ne: resolvedParams.id },
-                date: body.date,
-                shift: body.shift,
-                status: { $ne: 'cancelled' }
-            });
+        // Time Validation if confirming
+        if (body.status === 'confirmed' && body.confirmedTime) {
+            const shift = body.shift || currentAppointment.shift;
+            const hours = SHIFT_HOURS[shift];
+            if (hours) {
+                const [timeH, timeM] = body.confirmedTime.split(':').map(Number);
+                const [startH, startM] = hours.start.split(':').map(Number);
+                const [endH, endM] = hours.end.split(':').map(Number);
 
-            if (existing) {
-                return NextResponse.json(
-                    { success: false, error: "Time slot already booked" },
-                    { status: 409 }
-                );
+                const timeInMins = timeH * 60 + timeM;
+                const startInMins = startH * 60 + startM;
+                const endInMins = endH * 60 + endM;
+
+                if (timeInMins < startInMins || timeInMins > endInMins) {
+                    return NextResponse.json(
+                        { success: false, error: `Confirmation time ${body.confirmedTime} is outside shift hours (${hours.start} - ${hours.end})` },
+                        { status: 400 }
+                    );
+                }
             }
         }
 
@@ -59,32 +65,69 @@ export async function PUT(request, { params }) {
             updateData.confirmedAt = new Date();
             if (body.confirmedTime) updateData.confirmedTime = body.confirmedTime;
         }
-        if (body.status === 'cancelled') updateData.cancelledAt = new Date();
+        if (body.status === 'cancelled') {
+            updateData.cancelledAt = new Date();
+            updateData.cancelledBy = body.cancelledBy || 'doctor';
+            updateData.cancellationReason = body.cancellationReason || '';
+        }
 
-        const appointment = await Appointment.findByIdAndUpdate(resolvedParams.id, updateData, { new: true });
+        // Audit Log
+        if (body.status && body.status !== previousStatus) {
+            updateData.$push = {
+                auditLog: {
+                    status: body.status,
+                    previousStatus: previousStatus,
+                    changedAt: new Date(),
+                    changedBy: auth.user?.email || 'admin',
+                    notes: body.cancellationReason || body.notes || ''
+                }
+            };
+        }
+
+        const appointment = await Appointment.findByIdAndUpdate(
+            resolvedParams.id,
+            updateData.status && updateData.status !== previousStatus ? { $set: { ...updateData, $push: undefined }, $push: updateData.$push } : updateData,
+            { new: true }
+        );
 
         if (!appointment) {
             return NextResponse.json({ success: false, error: "Appointment not found" }, { status: 404 });
         }
 
-        if (body.status && currentAppointment.email) {
+        // Asynchronous Notification (Don't await to keep API fast)
+        const sendNotification = async () => {
             try {
-                await sendAppointmentStatusEmail({
-                    name: appointment.name,
-                    date: appointment.date,
-                    shift: appointment.shift,
-                    shiftStart: appointment.shiftStart,
-                    shiftEnd: appointment.shiftEnd
-                }, currentAppointment.email, body.status);
+                if (body.status && currentAppointment.email) {
+                    if (body.status === 'confirmed' && currentAppointment.confirmationEmailSent) {
+                        return;
+                    }
+                    await sendAppointmentStatusEmail({
+                        name: appointment.name,
+                        date: appointment.date,
+                        shift: appointment.shift,
+                        shiftStart: appointment.shiftStart,
+                        shiftEnd: appointment.shiftEnd
+                    }, currentAppointment.email, body.status, appointment.cancellationReason);
 
-                if (body.status === 'confirmed') {
-                    await Appointment.findByIdAndUpdate(resolvedParams.id, { confirmationEmailSent: true });
+                    const emailUpdate = {};
+                    if (body.status === 'confirmed') emailUpdate.confirmationEmailSent = true;
+                    if (body.status === 'cancelled') emailUpdate.cancellationEmailSent = true;
+
+                    if (Object.keys(emailUpdate).length > 0) {
+                        await Appointment.findByIdAndUpdate(resolvedParams.id, emailUpdate);
+                    }
+                } else if (body.status === 'cancelled' && !currentAppointment.email) {
+                    const { sendWhatsAppMsg } = await import("@/lib/twilio");
+                    const message = `Hello ${appointment.name}, your appointment scheduled for ${appointment.date} during ${appointment.shift} has been cancelled by the clinic. Reason: ${appointment.cancellationReason || 'Not specified'}. Please contact us for rescheduling.`;
+                    await sendWhatsAppMsg(appointment.phone, message);
                 }
-                console.log(`Email sent (${body.status}) to ${currentAppointment.email}`);
-            } catch (emailErr) {
-                console.error(`Failed to send ${body.status} email:`, emailErr);
+            } catch (notifyErr) {
+                console.error("Background notification failed:", notifyErr);
             }
-        }
+        };
+
+        // Synchronous Notification (Await to ensure delivery, UI uses Optimistic update)
+        await sendNotification();
 
         return NextResponse.json({ success: true, data: appointment });
 

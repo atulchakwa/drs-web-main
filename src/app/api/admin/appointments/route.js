@@ -14,15 +14,15 @@ export async function GET(request) {
     if (!auth.authorized) {
         return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     }
-    
+
     try {
         await connectDB();
-        
+
         const { searchParams } = new URL(request.url);
         const date = searchParams.get("date");
         const status = searchParams.get("status");
         const phone = searchParams.get("phone");
-        
+
         const query = {};
         if (date) query.date = date;
         if (status) query.status = status;
@@ -30,16 +30,16 @@ export async function GET(request) {
             const cleanPhone = phone.replace(/\s+/g, '').replace(/^\+91/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             query.phone = { $regex: `^${cleanPhone}`, $options: 'i' };
         }
-        
+
         const appointments = await Appointment.find(query).sort({ date: -1, shift: 1 });
-        
+
         const stats = await Appointment.aggregate([
             { $group: { _id: "$status", count: { $sum: 1 } } }
         ]);
-        
+
         const statsMap = {};
         stats.forEach(s => { statsMap[s._id] = s.count; });
-        
+
         return NextResponse.json({
             success: true,
             data: appointments,
@@ -51,7 +51,7 @@ export async function GET(request) {
                 "no-show": statsMap["no-show"] || 0
             }
         });
-        
+
     } catch (err) {
         console.error("Failed to fetch appointments:", err);
         return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
@@ -63,38 +63,68 @@ export async function POST(request) {
     if (!auth.authorized) {
         return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     }
-    
+
     try {
         await connectDB();
         const body = await request.json();
-        
-        const existingAppointment = await Appointment.findOne({
+
+        // Validation
+        if (!body.name || !body.phone || !body.date || !body.shift) {
+            return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+        }
+
+        const collisionQuery = {
             date: body.date,
             shift: body.shift,
-            status: { $ne: 'cancelled' }
-        });
-        
+            status: { $nin: ['cancelled', 'completed'] }
+        };
+
+        if (body.preferredTime) {
+            collisionQuery.preferredTime = body.preferredTime;
+        }
+
+        const existingAppointment = await Appointment.findOne(collisionQuery);
+
         if (existingAppointment) {
             return NextResponse.json(
-                { success: false, error: "This time slot is already booked" },
+                { success: false, error: "This time slot/preferred time is already booked" },
                 { status: 409 }
             );
         }
-        
+
         const appointment = await Appointment.create({
             name: body.name.trim(),
             phone: body.phone.trim(),
+            email: body.email?.trim() || '',
             date: body.date,
             shift: body.shift,
-            shiftStart: SHIFT_HOURS[body.shift]?.start || '09:00',
-            shiftEnd: SHIFT_HOURS[body.shift]?.end || '13:00',
+            shiftStart: body.shiftStart || SHIFT_HOURS[body.shift]?.start || '09:00',
+            shiftEnd: body.shiftEnd || SHIFT_HOURS[body.shift]?.end || '13:00',
+            preferredTime: body.preferredTime || '',
             message: body.message?.trim() || '',
             status: body.status || 'pending',
             dayOfWeek: new Date(body.date + 'T00:00:00').getDay()
         });
-        
+
+        // If status is confirmed, send confirmation email to patient
+        if (appointment.status === 'confirmed' && appointment.email) {
+            try {
+                const { sendAppointmentConfirmationEmail } = await import("@/lib/mailer");
+                await sendAppointmentConfirmationEmail({
+                    name: appointment.name,
+                    date: appointment.date,
+                    shift: appointment.shift,
+                    shiftStart: appointment.shiftStart,
+                    shiftEnd: appointment.shiftEnd
+                }, appointment.email);
+                await Appointment.findByIdAndUpdate(appointment._id, { confirmationEmailSent: true });
+            } catch (emailErr) {
+                console.error("Failed to send patient confirmation email:", emailErr);
+            }
+        }
+
         return NextResponse.json({ success: true, data: appointment }, { status: 201 });
-        
+
     } catch (err) {
         console.error("Failed to create appointment:", err);
         return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
@@ -106,23 +136,23 @@ export async function PATCH(request) {
     if (!auth.authorized) {
         return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     }
-    
+
     try {
         await connectDB();
         const body = await request.json();
         const { id, status, notes, shiftStart, shiftEnd } = body;
-        
+
         if (!id) {
             return NextResponse.json({ success: false, error: "Appointment ID is required" }, { status: 400 });
         }
-        
+
         const appointment = await Appointment.findById(id);
         if (!appointment) {
             return NextResponse.json({ success: false, error: "Appointment not found" }, { status: 404 });
         }
-        
+
         const previousStatus = appointment.status;
-        
+
         const updateData = {};
         if (status) {
             updateData.status = status;
@@ -136,13 +166,13 @@ export async function PATCH(request) {
         if (notes !== undefined) updateData.notes = notes;
         if (shiftStart) updateData.shiftStart = shiftStart;
         if (shiftEnd) updateData.shiftEnd = shiftEnd;
-        
+
         const updatedAppointment = await Appointment.findByIdAndUpdate(
             id,
             { $set: updateData },
             { new: true }
         );
-        
+
         if (status && appointment.email) {
             try {
                 await sendAppointmentStatusEmail({
@@ -152,7 +182,7 @@ export async function PATCH(request) {
                     shiftStart: updatedAppointment.shiftStart,
                     shiftEnd: updatedAppointment.shiftEnd
                 }, appointment.email, status);
-                
+
                 if (status === 'confirmed') {
                     await Appointment.findByIdAndUpdate(id, { confirmationEmailSent: true });
                 }
@@ -161,9 +191,9 @@ export async function PATCH(request) {
                 console.error(`Failed to send ${status} email:`, emailErr);
             }
         }
-        
+
         return NextResponse.json({ success: true, data: updatedAppointment });
-        
+
     } catch (err) {
         console.error("Failed to update appointment:", err);
         return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });

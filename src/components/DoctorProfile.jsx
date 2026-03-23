@@ -30,9 +30,9 @@ export default function DoctorProfile() {
                         <Image
                             src="/images/doctor.jpg"
                             fill
-                            unoptimized
                             className="object-cover object-top transform group-hover:scale-105 transition-transform duration-700"
-                            alt="Dr. Rajesh Sharma"
+                            alt="Dr. Rajesh Sharma - Specialist in Internal Medicine"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
 
                         {/* Floating mini badge */}

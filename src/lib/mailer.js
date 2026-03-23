@@ -11,6 +11,7 @@ function getBaseUrl() {
 }
 
 function formatDate(dateStr) {
+    if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-IN', {
         weekday: 'long',
@@ -20,19 +21,33 @@ function formatDate(dateStr) {
     });
 }
 
-export async function sendVerificationEmail(email, token) {
-    const transporter = nodemailer.createTransport({
+function createTransporter() {
+    const port = parseInt(process.env.SMTP_PORT || '587');
+    const isSecure = port === 465;
+
+    console.log(`Creating transporter: host=${process.env.SMTP_HOST}, port=${port}, secure=${isSecure}`);
+
+    return nodemailer.createTransport({
         host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: false,
+        port: port,
+        secure: isSecure,
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS
+        },
+        tls: {
+            // Do not fail on invalid certs
+            rejectUnauthorized: false
         }
     });
+}
+
+export async function sendVerificationEmail(email, token) {
+    const transporter = createTransporter();
 
     const link = `${getBaseUrl()}/verify-email?token=${token}`;
 
+    console.log(`Sending verification email to ${email}`);
     await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: email,
@@ -59,18 +74,13 @@ function escapeHtml(text) {
 }
 
 export async function sendAppointmentNotificationEmail(appointmentData) {
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: false,
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-        }
-    });
+    // Only send if email is provided
+    const recipientEmail = process.env.CLINIC_EMAIL || process.env.SMTP_USER;
+
+    const transporter = createTransporter();
 
     const formattedDate = formatDate(appointmentData.date);
-    
+
     const shiftTimes = {
         'Morning (9 AM - 1 PM)': '9:00 AM - 1:00 PM',
         'Evening (4 PM - 8 PM)': '4:00 PM - 8:00 PM'
@@ -78,9 +88,10 @@ export async function sendAppointmentNotificationEmail(appointmentData) {
 
     const timeDisplay = appointmentData.displayTime || appointmentData.shift;
 
+    console.log(`Sending notification to clinic: ${recipientEmail}`);
     await transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: process.env.CLINIC_EMAIL || process.env.SMTP_USER,
+        to: recipientEmail,
         subject: `New Appointment Request - ${appointmentData.name}`,
         html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -91,7 +102,7 @@ export async function sendAppointmentNotificationEmail(appointmentData) {
             
             <div style="background: #f9f9f9; padding: 24px; border: 1px solid #e0e0e0; border-top: none;">
                 <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
+                     <tr>
                         <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-weight: bold; width: 120px;">Patient Name</td>
                         <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0;">${escapeHtml(appointmentData.name)}</td>
                     </tr>
@@ -146,19 +157,72 @@ export async function sendAppointmentNotificationEmail(appointmentData) {
     });
 }
 
-export async function sendAppointmentConfirmationEmail(appointmentData, patientEmail) {
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: false,
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-        }
-    });
+export async function sendAppointmentAcknowledgementEmail(appointmentData, recipientEmail) {
+    const transporter = createTransporter();
 
     const formattedDate = formatDate(appointmentData.date);
-    
+    const timeDisplay = appointmentData.preferredTime
+        ? `${appointmentData.preferredTime} (within ${appointmentData.shift})`
+        : appointmentData.shift;
+
+    console.log(`Sending acknowledgment to patient: ${recipientEmail}`);
+    await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: recipientEmail,
+        subject: `Appointment Request Received - Dr. Rajesh Sharma's Clinic`,
+        html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+            <div style="background: #111; color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+                <h1 style="margin: 0; font-size: 24px;">Appointment Requested</h1>
+                <p style="margin: 10px 0 0; opacity: 0.8;">We have received your request, ${escapeHtml(appointmentData.name)}.</p>
+            </div>
+            
+            <div style="background: #f9f9f9; padding: 40px; border: 1px solid #eee; border-top: none; border-radius: 0 0 12px 12px;">
+                <p>Hello,</p>
+                <p>Thank you for choosing Dr. Rajesh Sharma's Clinic. We have received your appointment request and our staff will review it shortly.</p>
+                
+                <div style="background: white; padding: 25px; border-radius: 16px; margin: 30px 0; border: 1px solid #eee;">
+                    <h3 style="margin-top: 0; color: #111; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">Request Details</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 10px 0; color: #666;">Date:</td>
+                            <td style="padding: 10px 0; text-align: right; font-weight: bold;">${formattedDate}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; color: #666;">Time Slot:</td>
+                            <td style="padding: 10px 0; text-align: right; font-weight: bold;">${timeDisplay}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; color: #666;">Status:</td>
+                            <td style="padding: 10px 0; text-align: right;"><span style="background: #fff8e1; color: #b7791f; padding: 4px 12px; rounded: 8px; font-weight: bold; font-size: 12px;">PENDING CONFIRMATION</span></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <p style="font-size: 14px; color: #666; line-height: 1.6;">
+                    <strong>What happens next?</strong><br>
+                    Our administrative team will check the availability for your chosen slot and contact you via phone or email to confirm the final time.
+                </p>
+                
+                <p style="font-size: 14px; color: #666; margin-top: 20px;">
+                    If you need to change or cancel this request, please call us at <a href="tel:${process.env.NEXT_PUBLIC_CLINIC_PHONE}" style="color: #111; font-weight: bold; text-decoration: none;">${process.env.NEXT_PUBLIC_CLINIC_PHONE}</a>.
+                </p>
+                
+                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
+                    Dr. Rajesh Sharma's Clinic<br>
+                    Providing Quality Healthcare for Your Family
+                </div>
+            </div>
+        </div>
+        `
+    });
+}
+
+export async function sendAppointmentConfirmationEmail(appointmentData, patientEmail) {
+    const transporter = createTransporter();
+
+    const formattedDate = formatDate(appointmentData.date);
+
     const shiftTimes = {
         'Morning (9 AM - 1 PM)': '9:00 AM - 1:00 PM',
         'Evening (4 PM - 8 PM)': '4:00 PM - 8:00 PM'
@@ -168,6 +232,7 @@ export async function sendAppointmentConfirmationEmail(appointmentData, patientE
         ? `${appointmentData.shiftStart} - ${appointmentData.shiftEnd}`
         : (shiftTimes[appointmentData.shift] || '');
 
+    console.log(`Sending confirmation to patient: ${patientEmail}`);
     await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: patientEmail,
@@ -225,19 +290,11 @@ export async function sendAppointmentConfirmationEmail(appointmentData, patientE
     });
 }
 
-export async function sendAppointmentStatusEmail(appointmentData, patientEmail, status) {
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: false,
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-        }
-    });
+export async function sendAppointmentStatusEmail(appointmentData, patientEmail, status, reason = '') {
+    const transporter = createTransporter();
 
     const formattedDate = formatDate(appointmentData.date);
-    
+
     const shiftTimes = {
         'Morning (9 AM - 1 PM)': '9:00 AM - 1:00 PM',
         'Evening (4 PM - 8 PM)': '4:00 PM - 8:00 PM'
@@ -259,7 +316,7 @@ export async function sendAppointmentStatusEmail(appointmentData, patientEmail, 
             color: '#dc2626',
             bgColor: '#fef2f2',
             title: 'Appointment Cancelled',
-            message: 'Your appointment has been cancelled. Please contact us if you need to reschedule.',
+            message: reason ? `Your appointment has been cancelled. Reason: ${escapeHtml(reason)}` : 'Your appointment has been cancelled. Please contact us if you need to reschedule.',
             icon: '✕'
         },
         completed: {
@@ -317,10 +374,16 @@ export async function sendAppointmentStatusEmail(appointmentData, patientEmail, 
                     </table>
                 </div>
                 
+                ${status === 'cancelled' ? `
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${getBaseUrl()}/#appointment" style="display: inline-block; background: #536de6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 12px rgba(83,109,230,0.2);">Book New Appointment</a>
+                </div>
+                ` : ''}
+
                 ${status === 'cancelled' || status === 'no-show' ? `
                 <div style="background: #fef3c7; padding: 16px; border-radius: 8px; margin: 20px 0;">
                     <p style="margin: 0; font-size: 14px; color: #92400e;">
-                        Please contact us to reschedule your appointment at your earliest convenience.
+                        Please contact us to reschedule your appointment at your earliest convenience if you haven't booked a new one already.
                     </p>
                 </div>
                 ` : ''}
