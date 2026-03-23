@@ -9,6 +9,18 @@ const SHIFT_HOURS = {
     "Evening (4 PM - 8 PM)": { start: "16:00", end: "20:00" }
 };
 
+const VALID_SHIFTS = ["Morning (9 AM - 1 PM)", "Evening (4 PM - 8 PM)"];
+const VALID_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled', 'no-show'];
+
+function sanitizeMessage(message) {
+    if (!message) return '';
+    return message.replace(/<[^>]*>/g, '').trim().slice(0, 500);
+}
+
+function normalizePhone(phone) {
+    return phone?.replace(/\s+/g, '').replace(/^\+91/, '') || '';
+}
+
 export async function GET(request) {
     const auth = authMiddleware(request);
     if (!auth.authorized) {
@@ -28,7 +40,9 @@ export async function GET(request) {
         if (status) query.status = status;
         if (phone) {
             const cleanPhone = phone.replace(/\s+/g, '').replace(/^\+91/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            query.phone = { $regex: `^${cleanPhone}`, $options: 'i' };
+            if (cleanPhone.length > 0) {
+                query.phone = { $regex: `^${cleanPhone}`, $options: 'i' };
+            }
         }
 
         const appointments = await Appointment.find(query).sort({ date: -1, shift: 1 });
@@ -66,11 +80,45 @@ export async function POST(request) {
 
     try {
         await connectDB();
-        const body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
+        }
 
         // Validation
         if (!body.name || !body.phone || !body.date || !body.shift) {
             return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+        }
+
+        // Phone validation
+        const normalizedPhone = normalizePhone(body.phone);
+        if (!/^[6-9]\d{9}$/.test(normalizedPhone)) {
+            return NextResponse.json({ success: false, error: "Invalid phone number" }, { status: 400 });
+        }
+
+        // Email validation (if provided)
+        if (body.email && body.email.trim()) {
+            const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+            if (!emailRegex.test(body.email)) {
+                return NextResponse.json({ success: false, error: "Invalid email address" }, { status: 400 });
+            }
+        }
+
+        // Date format validation
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
+            return NextResponse.json({ success: false, error: "Invalid date format. Use YYYY-MM-DD" }, { status: 400 });
+        }
+
+        // Shift validation
+        if (!VALID_SHIFTS.includes(body.shift)) {
+            return NextResponse.json({ success: false, error: "Invalid shift selection" }, { status: 400 });
+        }
+
+        // Status validation (if provided)
+        if (body.status && !VALID_STATUSES.includes(body.status)) {
+            return NextResponse.json({ success: false, error: "Invalid status" }, { status: 400 });
         }
 
         const collisionQuery = {
@@ -94,20 +142,20 @@ export async function POST(request) {
 
         const appointment = await Appointment.create({
             name: body.name.trim(),
-            phone: body.phone.trim(),
+            phone: normalizedPhone,
             email: body.email?.trim() || '',
             date: body.date,
             shift: body.shift,
             shiftStart: body.shiftStart || SHIFT_HOURS[body.shift]?.start || '09:00',
             shiftEnd: body.shiftEnd || SHIFT_HOURS[body.shift]?.end || '13:00',
             preferredTime: body.preferredTime || '',
-            message: body.message?.trim() || '',
+            message: sanitizeMessage(body.message),
             status: body.status || 'pending',
             dayOfWeek: new Date(body.date + 'T00:00:00').getDay()
         });
 
         // If status is confirmed, send confirmation email to patient in background
-        if (appointment.status === 'confirmed' && appointment.email) {
+        if (appointment.status === 'confirmed' && appointment.email && appointment.email.trim()) {
             (async () => {
                 try {
                     const { sendAppointmentConfirmationEmail } = await import("@/lib/mailer");
@@ -142,7 +190,12 @@ export async function PATCH(request) {
 
     try {
         await connectDB();
-        const body = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
+        }
         const { id, status, notes, shiftStart, shiftEnd } = body;
 
         if (!id) {
@@ -176,7 +229,7 @@ export async function PATCH(request) {
             { new: true }
         );
 
-        if (status && appointment.email) {
+        if (status && appointment.email && appointment.email.trim()) {
             (async () => {
                 try {
                     await sendAppointmentStatusEmail({

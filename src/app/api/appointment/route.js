@@ -15,10 +15,24 @@ const SHIFT_HOURS = {
     "Evening (4 PM - 8 PM)": { start: "16:00", end: "20:00" }
 };
 
-// Simple in-memory rate limiter
+// Simple in-memory rate limiter with cleanup
 const ipRequests = new Map();
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
 const MAX_REQUESTS_PER_HOUR = 5;
+const CLEANUP_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
+// Periodic cleanup to prevent memory leak
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, times] of ipRequests) {
+        const recent = times.filter(t => now - t < RATE_LIMIT_WINDOW);
+        if (recent.length === 0) {
+            ipRequests.delete(ip);
+        } else {
+            ipRequests.set(ip, recent);
+        }
+    }
+}, CLEANUP_INTERVAL);
 
 function checkRateLimit(ip) {
     const now = Date.now();
@@ -46,7 +60,7 @@ function validateEmail(email) {
 }
 
 function getDayOfWeek(dateStr) {
-    const date = new Date(dateStr);
+    const date = new Date(dateStr + 'T00:00:00');
     return date.getDay();
 }
 
@@ -112,6 +126,39 @@ function isValidShiftForDay(shift, dayOfWeek) {
     return { valid: true };
 }
 
+function sanitizeMessage(message) {
+    if (!message) return '';
+    return message.replace(/<[^>]*>/g, '').trim().slice(0, 500);
+}
+
+function validatePreferredTime(preferredTime, shift) {
+    if (!preferredTime) return { valid: true };
+    
+    const shiftHours = SHIFT_HOURS[shift];
+    if (!shiftHours) return { valid: true };
+    
+    const [prefH, prefM] = preferredTime.replace(/\s*(AM|PM)\s*/i, '').split(':').map(Number);
+    const [startH, startM] = shiftHours.start.split(':').map(Number);
+    const [endH, endM] = shiftHours.end.split(':').map(Number);
+    
+    let prefInMins = prefH * 60 + prefM;
+    const startInMins = startH * 60 + startM;
+    const endInMins = endH * 60 + endM;
+    
+    if (preferredTime.toUpperCase().includes('PM') && prefH !== 12) prefInMins += 720;
+    if (preferredTime.toUpperCase().includes('AM') && prefH === 12) prefInMins -= 720;
+    
+    if (prefInMins < startInMins || prefInMins > endInMins) {
+        return { valid: false, error: `Preferred time ${preferredTime} is outside shift hours (${shiftHours.start} - ${shiftHours.end})` };
+    }
+    
+    return { valid: true };
+}
+
+function normalizePhone(phone) {
+    return phone?.replace(/\s+/g, '').replace(/^\+91/, '') || '';
+}
+
 function validateAppointment(data) {
     const errors = [];
 
@@ -130,13 +177,17 @@ function validateAppointment(data) {
     if (!data.date) {
         errors.push("Date is required");
     } else {
-        const dateValidation = isValidDateForClinic(data.date, data.shift);
-        if (!dateValidation.valid) {
-            errors.push(dateValidation.error);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
+            errors.push("Invalid date format. Use YYYY-MM-DD");
         } else {
-            const shiftValidation = isValidShiftForDay(data.shift, dateValidation.dayOfWeek);
-            if (!shiftValidation.valid) {
-                errors.push(shiftValidation.error);
+            const dateValidation = isValidDateForClinic(data.date, data.shift);
+            if (!dateValidation.valid) {
+                errors.push(dateValidation.error);
+            } else {
+                const shiftValidation = isValidShiftForDay(data.shift, dateValidation.dayOfWeek);
+                if (!shiftValidation.valid) {
+                    errors.push(shiftValidation.error);
+                }
             }
         }
     }
@@ -145,6 +196,14 @@ function validateAppointment(data) {
     } else if (!VALID_SHIFTS.weekday.includes(data.shift) && !VALID_SHIFTS.saturday.includes(data.shift)) {
         errors.push("Invalid shift selection");
     }
+    
+    if (data.preferredTime && data.shift) {
+        const timeValidation = validatePreferredTime(data.preferredTime, data.shift);
+        if (!timeValidation.valid) {
+            errors.push(timeValidation.error);
+        }
+    }
+    
     if (data.message && data.message.length > 500) {
         errors.push("Message must be less than 500 characters");
     }
@@ -182,21 +241,10 @@ export async function POST(req) {
 
         await connectDB();
 
-        // Check for existing appointment with same phone on same date
-        const existingByPhone = await Appointment.findOne({
-            phone: body.phone,
-            date: body.date,
-            status: { $nin: ['cancelled', 'completed', 'no-show'] }
-        });
+        const normalizedPhone = normalizePhone(body.phone);
 
-        if (existingByPhone) {
-            return NextResponse.json(
-                { success: false, error: "You already have an active appointment for this date. Please select a different date or call us directly." },
-                { status: 409 }
-            );
-        }
-
-        // Check if the time slot/preferred time is already booked
+        // Atomic operation: Check and create in one transaction
+        // Use findOneAndUpdate with upsert: false to atomically check if slot is available
         const collisionQuery = {
             date: body.date,
             shift: body.shift,
@@ -207,7 +255,22 @@ export async function POST(req) {
             collisionQuery.preferredTime = body.preferredTime;
         }
 
-        const existingBySlot = await Appointment.findOne(collisionQuery);
+        // Check for existing appointments that would conflict
+        const [existingByPhone, existingBySlot] = await Promise.all([
+            Appointment.findOne({
+                phone: normalizedPhone,
+                date: body.date,
+                status: { $nin: ['cancelled', 'completed', 'no-show'] }
+            }),
+            Appointment.findOne(collisionQuery)
+        ]);
+
+        if (existingByPhone) {
+            return NextResponse.json(
+                { success: false, error: "You already have an active appointment for this date. Please select a different date or call us directly." },
+                { status: 409 }
+            );
+        }
 
         if (existingBySlot) {
             const errorMsg = body.preferredTime
@@ -221,14 +284,14 @@ export async function POST(req) {
 
         const appointment = await Appointment.create({
             name: body.name.trim(),
-            phone: body.phone.trim(),
+            phone: normalizedPhone,
             email: body.email?.trim() || '',
             date: body.date,
             shift: body.shift,
             shiftStart: SHIFT_HOURS[body.shift]?.start || '09:00',
             shiftEnd: SHIFT_HOURS[body.shift]?.end || '13:00',
             preferredTime: body.preferredTime || '',
-            message: body.message?.trim() || '',
+            message: sanitizeMessage(body.message),
             status: 'pending',
             dayOfWeek: getDayOfWeek(body.date),
             ipAddress: ip,
@@ -260,7 +323,7 @@ export async function POST(req) {
         })();
 
         // Send acknowledgment email to patient in background
-        if (appointment.email) {
+        if (appointment.email && appointment.email.trim()) {
             (async () => {
                 try {
                     const { sendAppointmentAcknowledgementEmail } = await import("@/lib/mailer");

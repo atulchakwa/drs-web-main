@@ -4,6 +4,17 @@ import { createTokenResponse } from "@/lib/auth";
 const loginAttempts = new Map();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
+const CLEANUP_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
+// Periodic cleanup to prevent memory leak
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, record] of loginAttempts) {
+        if (now - record.firstAttempt > RATE_LIMIT_WINDOW) {
+            loginAttempts.delete(ip);
+        }
+    }
+}, CLEANUP_INTERVAL);
 
 function checkRateLimit(ip) {
     const now = Date.now();
@@ -38,7 +49,17 @@ export async function POST(request) {
             );
         }
 
-        const { email, password } = await request.json();
+        let body;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json(
+                { success: false, error: "Invalid JSON" },
+                { status: 400 }
+            );
+        }
+
+        const { email, password } = body;
 
         if (!email || !password) {
             return NextResponse.json(

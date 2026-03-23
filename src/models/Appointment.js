@@ -16,7 +16,8 @@ const AppointmentSchema = new mongoose.Schema({
     email: {
         type: String,
         trim: true,
-        lowercase: true
+        lowercase: true,
+        match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
     },
     date: {
         type: String,
@@ -95,6 +96,7 @@ const AppointmentSchema = new mongoose.Schema({
 
 AppointmentSchema.index({ date: 1, shift: 1, status: 1 });
 AppointmentSchema.index({ phone: 1 });
+AppointmentSchema.index({ email: 1 });
 AppointmentSchema.index({ status: 1, createdAt: -1 });
 
 export default mongoose.models.Appointment ||

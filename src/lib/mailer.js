@@ -84,11 +84,8 @@ function escapeHtml(text) {
 }
 
 export async function sendAppointmentNotificationEmail(appointmentData) {
-    // Only send if email is provided
     const recipientEmail = process.env.CLINIC_EMAIL || process.env.SMTP_USER;
-
     const transporter = createTransporter();
-
     const formattedDate = formatDate(appointmentData.date);
 
     const shiftTimes = {
@@ -104,62 +101,62 @@ export async function sendAppointmentNotificationEmail(appointmentData) {
         to: recipientEmail,
         subject: `New Appointment Request - ${appointmentData.name}`,
         html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: #111; color: white; padding: 20px; border-radius: 12px 12px 0 0;">
-                <h2 style="margin: 0;">New Appointment Request</h2>
-                <p style="margin: 8px 0 0; opacity: 0.8;">${new Date().toLocaleDateString('en-IN')}</p>
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 0; background: #fff;">
+            <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 30px; border-radius: 16px 16px 0 0;">
+                <h2 style="margin: 0; font-size: 26px; font-weight: 700;">New Appointment Request</h2>
+                <p style="margin: 10px 0 0; opacity: 0.9; font-size: 16px;">${new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
             
-            <div style="background: #f9f9f9; padding: 24px; border: 1px solid #e0e0e0; border-top: none;">
-                <table style="width: 100%; border-collapse: collapse;">
+            <div style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
                      <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-weight: bold; width: 120px;">Patient Name</td>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0;">${escapeHtml(appointmentData.name)}</td>
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; width: 140px; color: #64748b;">Patient Name</td>
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #1e293b; font-size: 18px;">${escapeHtml(appointmentData.name)}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Phone</td>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0;">
-                            <a href="tel:${escapeHtml(appointmentData.phone)}" style="color: #111; text-decoration: none;">${escapeHtml(appointmentData.phone)}</a>
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #64748b;">Phone</td>
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
+                            <a href="tel:${escapeHtml(appointmentData.phone)}" style="color: #059669; text-decoration: none; font-weight: 600; font-size: 17px;">${escapeHtml(appointmentData.phone)}</a>
                         </td>
                     </tr>
                     ${appointmentData.email ? `
                     <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Email</td>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0;">
-                            <a href="mailto:${escapeHtml(appointmentData.email)}" style="color: #111; text-decoration: none;">${escapeHtml(appointmentData.email)}</a>
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #64748b;">Email</td>
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
+                            <a href="mailto:${escapeHtml(appointmentData.email)}" style="color: #059669; text-decoration: none;">${escapeHtml(appointmentData.email)}</a>
                         </td>
                     </tr>
                     ` : ''}
                     <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Date</td>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0;">${formattedDate}</td>
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #64748b;">Date</td>
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;">${formattedDate}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Time Slot</td>
-                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0;">
-                            <strong>${timeDisplay}</strong><br>
-                            <span style="color: #666; font-size: 14px;">${shiftTimes[appointmentData.shift] || ''}</span>
-                            ${appointmentData.preferredTime ? `<br><span style="color: #059669; font-size: 13px;">Preferred Time: ${appointmentData.preferredTime}</span>` : ''}
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #64748b; vertical-align: top;">Time Slot</td>
+                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
+                            <span style="font-weight: 700; color: #1e293b; font-size: 18px;">${timeDisplay}</span><br>
+                            <span style="color: #64748b; font-size: 15px;">${shiftTimes[appointmentData.shift] || ''}</span>
+                            ${appointmentData.preferredTime ? `<br><span style="color: #059669; font-size: 15px; font-weight: 600;">Preferred: ${appointmentData.preferredTime}</span>` : ''}
                         </td>
                     </tr>
                     ${appointmentData.message ? `
                     <tr>
-                        <td style="padding: 12px 0; font-weight: bold; vertical-align: top;">Message</td>
-                        <td style="padding: 12px 0;">${escapeHtml(appointmentData.message)}</td>
+                        <td style="padding: 16px 0; font-weight: 600; color: #64748b; vertical-align: top;">Message</td>
+                        <td style="padding: 16px 0; color: #475569; font-size: 15px;">${escapeHtml(appointmentData.message)}</td>
                     </tr>
                     ` : ''}
                 </table>
                 
                 ${appointmentData.appointmentId ? `
-                <p style="margin-top: 20px; font-size: 12px; color: #888;">
-                    Appointment ID: ${appointmentData.appointmentId}
+                <p style="margin-top: 24px; font-size: 14px; color: #94a3b8;">
+                    <strong>Appointment ID:</strong> ${appointmentData.appointmentId}
                 </p>
                 ` : ''}
             </div>
             
-            <div style="background: #e8f5e9; padding: 16px; border-radius: 0 0 12px 12px; border: 1px solid #c8e6c9;">
-                <p style="margin: 0; color: #2e7d32; font-size: 14px;">
-                    <strong>Action Required:</strong> Please contact the patient to confirm their appointment slot.
+            <div style="background: #ecfdf5; padding: 24px; border-radius: 0 0 16px 16px; border: 1px solid #a7f3d0; border-top: none;">
+                <p style="margin: 0; color: #065f46; font-size: 17px; font-weight: 600;">
+                    Action Required: Please contact the patient to confirm their appointment slot.
                 </p>
             </div>
         </div>

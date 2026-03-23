@@ -5,7 +5,8 @@ const PatientSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        trim: true
+        trim: true,
+        match: [/^[6-9]\d{9}$/, 'Please enter a valid Indian phone number']
     },
     name: {
         type: String,
@@ -15,7 +16,8 @@ const PatientSchema = new mongoose.Schema({
     email: {
         type: String,
         trim: true,
-        lowercase: true
+        lowercase: true,
+        match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
     },
     totalVisits: {
         type: Number,

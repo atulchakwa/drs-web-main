@@ -21,8 +21,21 @@ export async function GET(request) {
         
         const cleanPhone = phone.replace(/\s+/g, '').replace(/^\+91/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         
+        // Prevent ReDoS: require minimum 3 characters and validate length
+        if (cleanPhone.length < 3) {
+            return NextResponse.json({ success: false, error: "Phone must be at least 3 digits" }, { status: 400 });
+        }
+        if (cleanPhone.length > 15) {
+            return NextResponse.json({ success: false, error: "Invalid phone number" }, { status: 400 });
+        }
+        
+        // Use exact match for complete phone numbers (10+ digits), regex only for partial
+        const phoneMatch = cleanPhone.length >= 10 
+            ? cleanPhone 
+            : { $regex: `^${cleanPhone}`, $options: 'i' };
+        
         const patients = await Appointment.aggregate([
-            { $match: { phone: { $regex: `^${cleanPhone}`, $options: 'i' } } },
+            { $match: { phone: phoneMatch } },
             { $sort: { createdAt: -1 } },
             {
                 $group: {

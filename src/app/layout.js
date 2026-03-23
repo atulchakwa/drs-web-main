@@ -1,6 +1,7 @@
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import LayoutWrapper from "../components/LayoutWrapper";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -71,9 +72,11 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="bg-background text-secondary font-sans selection:bg-primary-100 selection:text-primary-900 flex flex-col items-center overflow-x-hidden min-h-screen">
-        <LayoutWrapper>
-          {children}
-        </LayoutWrapper>
+        <ErrorBoundary>
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
+        </ErrorBoundary>
       </body>
     </html>
   );

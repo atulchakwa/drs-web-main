@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import Appointment from "@/models/Appointment";
 import { authMiddleware } from "@/lib/auth";
@@ -9,6 +10,15 @@ const SHIFT_HOURS = {
     "Evening (4 PM - 8 PM)": { start: "16:00", end: "20:00" }
 };
 
+const VALID_STATUSES = ['pending', 'confirmed', 'completed', 'cancelled', 'no-show'];
+
+const VALID_SHIFTS = ["Morning (9 AM - 1 PM)", "Evening (4 PM - 8 PM)"];
+
+function sanitizeMessage(message) {
+    if (!message) return '';
+    return message.replace(/<[^>]*>/g, '').trim().slice(0, 500);
+}
+
 export async function PUT(request, { params }) {
     const auth = authMiddleware(request);
     if (!auth.authorized) {
@@ -18,7 +28,42 @@ export async function PUT(request, { params }) {
     try {
         const resolvedParams = await params;
         await connectDB();
-        const body = await request.json();
+        
+        let body;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
+        }
+
+        // Check for empty body
+        if (!body || Object.keys(body).length === 0) {
+            return NextResponse.json({ success: false, error: "No update data provided" }, { status: 400 });
+        }
+
+        // Validate ObjectID
+        if (!mongoose.Types.ObjectId.isValid(resolvedParams.id)) {
+            return NextResponse.json(
+                { success: false, error: "Invalid appointment ID" },
+                { status: 400 }
+            );
+        }
+
+        // Validate status against enum
+        if (body.status && !VALID_STATUSES.includes(body.status)) {
+            return NextResponse.json(
+                { success: false, error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` },
+                { status: 400 }
+            );
+        }
+
+        // Validate shift if provided
+        if (body.shift && !VALID_SHIFTS.includes(body.shift)) {
+            return NextResponse.json(
+                { success: false, error: `Invalid shift. Must be one of: ${VALID_SHIFTS.join(', ')}` },
+                { status: 400 }
+            );
+        }
 
         const currentAppointment = await Appointment.findById(resolvedParams.id);
         if (!currentAppointment) {
@@ -57,7 +102,7 @@ export async function PUT(request, { params }) {
             updateData.shiftEnd = SHIFT_HOURS[body.shift]?.end || '13:00';
         }
         if (body.status) updateData.status = body.status;
-        if (body.message !== undefined) updateData.message = body.message?.trim() || '';
+        if (body.message !== undefined) updateData.message = sanitizeMessage(body.message);
 
         const previousStatus = currentAppointment.status;
 
@@ -97,7 +142,7 @@ export async function PUT(request, { params }) {
         // Asynchronous Notification (Don't await to keep API fast)
         const sendNotification = async () => {
             try {
-                if (body.status && currentAppointment.email) {
+                if (body.status && currentAppointment.email && currentAppointment.email.trim()) {
                     if (body.status === 'confirmed' && currentAppointment.confirmationEmailSent) {
                         return;
                     }
@@ -116,7 +161,7 @@ export async function PUT(request, { params }) {
                     if (Object.keys(emailUpdate).length > 0) {
                         await Appointment.findByIdAndUpdate(resolvedParams.id, emailUpdate);
                     }
-                } else if (body.status === 'cancelled' && !currentAppointment.email) {
+                } else if (body.status === 'cancelled' && (!currentAppointment.email || !currentAppointment.email.trim())) {
                     const { sendWhatsAppMsg } = await import("@/lib/twilio");
                     const message = `Hello ${appointment.name}, your appointment scheduled for ${appointment.date} during ${appointment.shift} has been cancelled by the clinic. Reason: ${appointment.cancellationReason || 'Not specified'}. Please contact us for rescheduling.`;
                     await sendWhatsAppMsg(appointment.phone, message);
@@ -146,6 +191,15 @@ export async function DELETE(request, { params }) {
     try {
         const resolvedParams = await params;
         await connectDB();
+
+        // Validate ObjectID
+        if (!mongoose.Types.ObjectId.isValid(resolvedParams.id)) {
+            return NextResponse.json(
+                { success: false, error: "Invalid appointment ID" },
+                { status: 400 }
+            );
+        }
+
         const appointment = await Appointment.findByIdAndDelete(resolvedParams.id);
 
         if (!appointment) {
