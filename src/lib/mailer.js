@@ -2,10 +2,8 @@ import nodemailer from "nodemailer";
 
 function getBaseUrl() {
     if (process.env.APP_URL) return process.env.APP_URL;
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    const hostname = process.env.VERCEL_URL || 'localhost';
-    const port = process.env.PORT || 3000;
-    return `${protocol}://${hostname}${port === '80' || port === '443' ? '' : `:${port}`}`;
+    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+    return 'http://localhost:3000';
 }
 
 function formatDate(dateStr) {
@@ -14,31 +12,26 @@ function formatDate(dateStr) {
     return date.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-let transporter = null;
-
 function createTransporter() {
-    if (transporter) return transporter;
-
     const port = parseInt(process.env.SMTP_PORT || '587');
     const isSecure = port === 465;
 
-    transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
+    const smtpHost = process.env.SMTP_HOST || process.env.MAIL_HOST || 'smtp.gmail.com';
+    const smtpUser = process.env.SMTP_USER || process.env.MAIL_USERNAME;
+    const smtpPass = process.env.SMTP_PASS || process.env.MAIL_PASSWORD;
+
+    if (!smtpUser || !smtpPass) {
+        console.error('SMTP credentials not configured');
+        throw new Error('SMTP credentials not configured');
+    }
+
+    return nodemailer.createTransport({
+        host: smtpHost,
         port,
         secure: isSecure,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        auth: { user: smtpUser, pass: smtpPass },
         tls: { rejectUnauthorized: false }
     });
-
-    transporter.verify((error) => {
-        if (error) {
-            console.log('SMTP Transporter verification failed:', error.message);
-        } else {
-            console.log('SMTP Transporter is ready');
-        }
-    });
-
-    return transporter;
 }
 
 const styles = {
@@ -105,8 +98,9 @@ export async function sendVerificationEmail(email, token) {
         <p style="margin: 0; font-size: 13px; color: ${styles.muted};">Link expires in 24 hours. If you didn't create an account, please ignore this email.</p>
     `;
 
+    const fromEmail = process.env.MAIL_FROM || process.env.SMTP_USER || 'noreply@clinic.com';
     await transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `Dr. Rajesh Sharma's Clinic <${fromEmail}>`,
         to: email,
         subject: "Verify Your Email - Dr. Rajesh Sharma's Clinic",
         html: emailTemplate(content)
@@ -115,8 +109,9 @@ export async function sendVerificationEmail(email, token) {
 
 export async function sendAppointmentNotificationEmail(appointmentData) {
     const transporter = createTransporter();
-    const recipientEmail = process.env.CLINIC_EMAIL || process.env.SMTP_USER;
+    const recipientEmail = process.env.CLINIC_EMAIL || process.env.MAIL_FROM || process.env.SMTP_USER;
     const formattedDate = formatDate(appointmentData.date);
+    const fromEmail = process.env.MAIL_FROM || process.env.SMTP_USER || 'noreply@clinic.com';
 
     const content = `
         <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${styles.dark};">New Appointment Request</h2>
@@ -135,7 +130,7 @@ export async function sendAppointmentNotificationEmail(appointmentData) {
     `;
 
     await transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `Dr. Rajesh Sharma's Clinic <${fromEmail}>`,
         to: recipientEmail,
         subject: `New Appointment - ${appointmentData.name}`,
         html: emailTemplate(content)
@@ -145,6 +140,7 @@ export async function sendAppointmentNotificationEmail(appointmentData) {
 export async function sendAppointmentAcknowledgementEmail(appointmentData, recipientEmail) {
     const transporter = createTransporter();
     const formattedDate = formatDate(appointmentData.date);
+    const fromEmail = process.env.MAIL_FROM || process.env.SMTP_USER || 'noreply@clinic.com';
 
     const content = `
         <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${styles.dark};">Hello ${appointmentData.name},</h2>
@@ -160,7 +156,7 @@ export async function sendAppointmentAcknowledgementEmail(appointmentData, recip
     `;
 
     await transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `Dr. Rajesh Sharma's Clinic <${fromEmail}>`,
         to: recipientEmail,
         subject: "Appointment Request Received",
         html: emailTemplate(content)
@@ -170,6 +166,7 @@ export async function sendAppointmentAcknowledgementEmail(appointmentData, recip
 export async function sendAppointmentConfirmationEmail(appointmentData, patientEmail) {
     const transporter = createTransporter();
     const formattedDate = formatDate(appointmentData.date);
+    const fromEmail = process.env.MAIL_FROM || process.env.SMTP_USER || 'noreply@clinic.com';
 
     const content = `
         <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${styles.dark};">Dear ${appointmentData.name},</h2>
@@ -185,7 +182,7 @@ export async function sendAppointmentConfirmationEmail(appointmentData, patientE
     `;
 
     await transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `Dr. Rajesh Sharma's Clinic <${fromEmail}>`,
         to: patientEmail,
         subject: `Appointment Confirmed - ${formattedDate}`,
         html: emailTemplate(content)
@@ -195,6 +192,7 @@ export async function sendAppointmentConfirmationEmail(appointmentData, patientE
 export async function sendAppointmentStatusEmail(appointmentData, patientEmail, status, reason = '') {
     const transporter = createTransporter();
     const formattedDate = formatDate(appointmentData.date);
+    const fromEmail = process.env.MAIL_FROM || process.env.SMTP_USER || 'noreply@clinic.com';
 
     const statusInfo = {
         confirmed: { color: '#10b981', title: 'Appointment Confirmed', msg: 'We look forward to seeing you!' },
@@ -218,7 +216,7 @@ export async function sendAppointmentStatusEmail(appointmentData, patientEmail, 
     `;
 
     await transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `Dr. Rajesh Sharma's Clinic <${fromEmail}>`,
         to: patientEmail,
         subject: `${info.title} - ${formattedDate}`,
         html: emailTemplate(content)
