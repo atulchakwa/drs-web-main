@@ -14,13 +14,13 @@ export default function LoginPage() {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        fetch("/api/auth/me")
+        fetch("/api/auth/me", { credentials: "include" })
             .then(res => res.json())
             .then(data => {
-                if (data.authenticated) router.push("/dashboard");
+                if (data.authenticated) window.location.href = "/dashboard";
             })
             .catch(() => { });
-    }, [router]);
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -31,13 +31,14 @@ export default function LoginPage() {
             const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({ email, password })
             });
 
             const data = await res.json();
 
             if (data.success && res.ok) {
-                router.push("/dashboard");
+                window.location.href = "/dashboard";
             } else {
                 setError(data.error || "Invalid login credentials.");
             }

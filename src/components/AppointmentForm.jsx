@@ -3,8 +3,8 @@
 import React, { useState, useMemo } from 'react';
 
 const SHIFT_OPTIONS = {
-    'Morning (9 AM - 1 PM)': { hours: '09:00 - 13:00', type: 'morning', days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] },
-    'Evening (4 PM - 8 PM)': { hours: '16:00 - 20:00', type: 'evening', days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] }
+    'Morning (9 AM - 1 PM)': { start: 9, end: 13, type: 'morning', days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] },
+    'Evening (4 PM - 8 PM)': { start: 16, end: 20, type: 'evening', days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] }
 };
 
 const getDayOfWeek = (dateStr) => {
@@ -46,22 +46,14 @@ export default function AppointmentForm() {
         const shiftInfo = SHIFT_OPTIONS[formData.shift];
         if (!shiftInfo) return [];
 
-        const [startHour, startMin] = shiftInfo.hours.split(' - ')[0].split(':');
-        const [endHour, endMin] = shiftInfo.hours.split(' - ')[1].split(':');
-
-        let start = parseInt(startHour);
-        const end = parseInt(endHour);
-        const isPM = shiftInfo.hours.includes('PM') && end !== 12;
-
-        if (isPM && start !== 12) start += 12;
-        if (shiftInfo.hours.includes('AM') && end === 12) start += 12;
+        const start = shiftInfo.start;
+        const end = shiftInfo.end;
 
         for (let h = start; h < end; h++) {
             for (let m = 0; m < 60; m += 30) {
-                const hour24 = h;
-                const hour12 = hour24 > 12 ? hour24 - 12 : (hour24 === 0 ? 12 : hour24);
-                const ampm = hour24 >= 12 ? 'PM' : 'AM';
-                const time = `${hour12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                const hour12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
                 const displayTime = `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
                 slots.push({ value: time, label: displayTime });
             }

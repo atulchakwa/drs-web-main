@@ -1,9 +1,7 @@
 import nodemailer from "nodemailer";
 
 function getBaseUrl() {
-    if (process.env.APP_URL) {
-        return process.env.APP_URL;
-    }
+    if (process.env.APP_URL) return process.env.APP_URL;
     const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
     const hostname = process.env.VERCEL_URL || 'localhost';
     const port = process.env.PORT || 3000;
@@ -13,12 +11,7 @@ function getBaseUrl() {
 function formatDate(dateStr) {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+    return date.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 let transporter = null;
@@ -29,21 +22,12 @@ function createTransporter() {
     const port = parseInt(process.env.SMTP_PORT || '587');
     const isSecure = port === 465;
 
-    console.log(`Creating transporter: host=${process.env.SMTP_HOST}, port=${port}, secure=${isSecure}`);
-
     transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
-        port: port,
+        port,
         secure: isSecure,
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-        },
-        tls: {
-            // Do not fail on invalid certs
-            rejectUnauthorized: false
-        },
-        // Pool settings for performance
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        tls: { rejectUnauthorized: false },
         pool: true,
         maxConnections: 5,
         maxMessages: 100
@@ -52,357 +36,186 @@ function createTransporter() {
     return transporter;
 }
 
+const styles = {
+    primary: '#3b82f6',
+    dark: '#1e293b',
+    muted: '#64748b',
+    light: '#f8fafc',
+    white: '#ffffff',
+    border: '#e2e8f0'
+};
+
+const emailTemplate = (content) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: ${styles.light};">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: ${styles.light}; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background: ${styles.white}; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <tr>
+                        <td style="background: ${styles.primary}; padding: 30px; text-align: center;">
+                            <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: ${styles.white};">Dr. Rajesh Sharma's Clinic</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px;">
+                            ${content}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background: ${styles.dark}; padding: 20px 30px; text-align: center;">
+                            <p style="margin: 0; font-size: 13px; color: #94a3b8;">123 Health Avenue, Medical District, Indore</p>
+                            <p style="margin: 8px 0 0; font-size: 12px; color: #64748b;">This is an automated message. Please do not reply to this email.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+`;
+
+const card = (content) => `<table width="100%" cellpadding="0" cellspacing="0" style="background: ${styles.light}; padding: 20px; border-radius: 8px; margin: 16px 0;">${content}</table>`;
+
 export async function sendVerificationEmail(email, token) {
     const transporter = createTransporter();
-
     const link = `${getBaseUrl()}/verify-email?token=${token}`;
 
-    console.log(`Sending verification email to ${email}`);
+    const content = `
+        <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${styles.dark};">Verify Your Email</h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: ${styles.muted};">Thank you for registering. Please verify your email address to get started.</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+            <tr>
+                <td align="center">
+                    <a href="${link}" style="display: inline-block; background: ${styles.primary}; color: ${styles.white}; padding: 12px 28px; font-size: 15px; font-weight: 500; text-decoration: none; border-radius: 8px;">Verify Email</a>
+                </td>
+            </tr>
+        </table>
+        <p style="margin: 0; font-size: 13px; color: ${styles.muted};">Link expires in 24 hours. If you didn't create an account, please ignore this email.</p>
+    `;
+
     await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: email,
         subject: "Verify Your Email - Dr. Rajesh Sharma's Clinic",
-        html: `
-         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #111;">Email Verification</h2>
-            <p>Click the link below to verify your account:</p>
-            <a href="${link}" style="display: inline-block; background: #111; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 16px 0;">Verify Email</a>
-            <p style="color: #666; font-size: 14px;">This link expires in 24 hours.</p>
-         </div>
-        `
+        html: emailTemplate(content)
     });
 }
 
-function escapeHtml(text) {
-    if (!text) return '';
-    return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
 export async function sendAppointmentNotificationEmail(appointmentData) {
-    const recipientEmail = process.env.CLINIC_EMAIL || process.env.SMTP_USER;
     const transporter = createTransporter();
+    const recipientEmail = process.env.CLINIC_EMAIL || process.env.SMTP_USER;
     const formattedDate = formatDate(appointmentData.date);
 
-    const shiftTimes = {
-        'Morning (9 AM - 1 PM)': '9:00 AM - 1:00 PM',
-        'Evening (4 PM - 8 PM)': '4:00 PM - 8:00 PM'
-    };
+    const content = `
+        <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${styles.dark};">New Appointment Request</h2>
+        <p style="margin: 0 0 16px; font-size: 15px; color: ${styles.muted};">A new appointment request has been received.</p>
+        ${card(`
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="padding: 8px 0;"><strong>Patient:</strong> ${appointmentData.name}</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Phone:</strong> <a href="tel:${appointmentData.phone}" style="color: ${styles.primary};">${appointmentData.phone}</a></td></tr>
+                ${appointmentData.email ? `<tr><td style="padding: 8px 0;"><strong>Email:</strong> ${appointmentData.email}</td></tr>` : ''}
+                <tr><td style="padding: 8px 0;"><strong>Date:</strong> ${formattedDate}</td></tr>
+                <tr><td style="padding: 8px 0;"><strong>Time:</strong> ${appointmentData.displayTime || appointmentData.shift}</td></tr>
+                ${appointmentData.message ? `<tr><td style="padding: 8px 0;"><strong>Message:</strong> ${appointmentData.message}</td></tr>` : ''}
+            </table>
+        `)}
+        <p style="margin: 0; font-size: 14px; color: #b45309;">Please contact the patient to confirm their appointment.</p>
+    `;
 
-    const timeDisplay = appointmentData.displayTime || appointmentData.shift;
-
-    console.log(`Sending notification to clinic: ${recipientEmail}`);
     await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: recipientEmail,
-        subject: `New Appointment Request - ${appointmentData.name}`,
-        html: `
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 0; background: #fff;">
-            <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 30px; border-radius: 16px 16px 0 0;">
-                <h2 style="margin: 0; font-size: 26px; font-weight: 700;">New Appointment Request</h2>
-                <p style="margin: 10px 0 0; opacity: 0.9; font-size: 16px;">${new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
-            
-            <div style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 16px;">
-                     <tr>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; width: 140px; color: #64748b;">Patient Name</td>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #1e293b; font-size: 18px;">${escapeHtml(appointmentData.name)}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #64748b;">Phone</td>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
-                            <a href="tel:${escapeHtml(appointmentData.phone)}" style="color: #059669; text-decoration: none; font-weight: 600; font-size: 17px;">${escapeHtml(appointmentData.phone)}</a>
-                        </td>
-                    </tr>
-                    ${appointmentData.email ? `
-                    <tr>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #64748b;">Email</td>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
-                            <a href="mailto:${escapeHtml(appointmentData.email)}" style="color: #059669; text-decoration: none;">${escapeHtml(appointmentData.email)}</a>
-                        </td>
-                    </tr>
-                    ` : ''}
-                    <tr>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #64748b;">Date</td>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;">${formattedDate}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #64748b; vertical-align: top;">Time Slot</td>
-                        <td style="padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
-                            <span style="font-weight: 700; color: #1e293b; font-size: 18px;">${timeDisplay}</span><br>
-                            <span style="color: #64748b; font-size: 15px;">${shiftTimes[appointmentData.shift] || ''}</span>
-                            ${appointmentData.preferredTime ? `<br><span style="color: #059669; font-size: 15px; font-weight: 600;">Preferred: ${appointmentData.preferredTime}</span>` : ''}
-                        </td>
-                    </tr>
-                    ${appointmentData.message ? `
-                    <tr>
-                        <td style="padding: 16px 0; font-weight: 600; color: #64748b; vertical-align: top;">Message</td>
-                        <td style="padding: 16px 0; color: #475569; font-size: 15px;">${escapeHtml(appointmentData.message)}</td>
-                    </tr>
-                    ` : ''}
-                </table>
-                
-                ${appointmentData.appointmentId ? `
-                <p style="margin-top: 24px; font-size: 14px; color: #94a3b8;">
-                    <strong>Appointment ID:</strong> ${appointmentData.appointmentId}
-                </p>
-                ` : ''}
-            </div>
-            
-            <div style="background: #ecfdf5; padding: 24px; border-radius: 0 0 16px 16px; border: 1px solid #a7f3d0; border-top: none;">
-                <p style="margin: 0; color: #065f46; font-size: 17px; font-weight: 600;">
-                    Action Required: Please contact the patient to confirm their appointment slot.
-                </p>
-            </div>
-        </div>
-        `
+        subject: `New Appointment - ${appointmentData.name}`,
+        html: emailTemplate(content)
     });
 }
 
 export async function sendAppointmentAcknowledgementEmail(appointmentData, recipientEmail) {
     const transporter = createTransporter();
-
     const formattedDate = formatDate(appointmentData.date);
-    const timeDisplay = appointmentData.preferredTime
-        ? `${appointmentData.preferredTime} (within ${appointmentData.shift})`
-        : appointmentData.shift;
 
-    console.log(`Sending acknowledgment to patient: ${recipientEmail}`);
+    const content = `
+        <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${styles.dark};">Hello ${appointmentData.name},</h2>
+        <p style="margin: 0 0 16px; font-size: 15px; color: ${styles.muted};">Thank you for choosing our clinic. We have received your appointment request.</p>
+        ${card(`
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="padding: 6px 0;"><strong>Date:</strong> ${formattedDate}</td></tr>
+                <tr><td style="padding: 6px 0;"><strong>Time:</strong> ${appointmentData.preferredTime || appointmentData.shift}</td></tr>
+                <tr><td style="padding: 6px 0;"><strong>Status:</strong> <span style="color: #b45309;">Pending</span></td></tr>
+            </table>
+        `)}
+        <p style="margin: 0; font-size: 14px; color: ${styles.muted};">We will contact you soon to confirm your appointment.</p>
+    `;
+
     await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: recipientEmail,
-        subject: `Appointment Request Received - Dr. Rajesh Sharma's Clinic`,
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-            <div style="background: #111; color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px;">Appointment Requested</h1>
-                <p style="margin: 10px 0 0; opacity: 0.8;">We have received your request, ${escapeHtml(appointmentData.name)}.</p>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 40px; border: 1px solid #eee; border-top: none; border-radius: 0 0 12px 12px;">
-                <p>Hello,</p>
-                <p>Thank you for choosing Dr. Rajesh Sharma's Clinic. We have received your appointment request and our staff will review it shortly.</p>
-                
-                <div style="background: white; padding: 25px; border-radius: 16px; margin: 30px 0; border: 1px solid #eee;">
-                    <h3 style="margin-top: 0; color: #111; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">Request Details</h3>
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <td style="padding: 10px 0; color: #666;">Date:</td>
-                            <td style="padding: 10px 0; text-align: right; font-weight: bold;">${formattedDate}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px 0; color: #666;">Time Slot:</td>
-                            <td style="padding: 10px 0; text-align: right; font-weight: bold;">${timeDisplay}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px 0; color: #666;">Status:</td>
-                            <td style="padding: 10px 0; text-align: right;"><span style="background: #fff8e1; color: #b7791f; padding: 4px 12px; rounded: 8px; font-weight: bold; font-size: 12px;">PENDING CONFIRMATION</span></td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <p style="font-size: 14px; color: #666; line-height: 1.6;">
-                    <strong>What happens next?</strong><br>
-                    Our administrative team will check the availability for your chosen slot and contact you via phone or email to confirm the final time.
-                </p>
-                
-                <p style="font-size: 14px; color: #666; margin-top: 20px;">
-                    If you need to change or cancel this request, please call us at <a href="tel:${process.env.NEXT_PUBLIC_CLINIC_PHONE}" style="color: #111; font-weight: bold; text-decoration: none;">${process.env.NEXT_PUBLIC_CLINIC_PHONE}</a>.
-                </p>
-                
-                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
-                    Dr. Rajesh Sharma's Clinic<br>
-                    Providing Quality Healthcare for Your Family
-                </div>
-            </div>
-        </div>
-        `
+        subject: "Appointment Request Received",
+        html: emailTemplate(content)
     });
 }
 
 export async function sendAppointmentConfirmationEmail(appointmentData, patientEmail) {
     const transporter = createTransporter();
-
     const formattedDate = formatDate(appointmentData.date);
 
-    const shiftTimes = {
-        'Morning (9 AM - 1 PM)': '9:00 AM - 1:00 PM',
-        'Evening (4 PM - 8 PM)': '4:00 PM - 8:00 PM'
-    };
+    const content = `
+        <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${styles.dark};">Dear ${appointmentData.name},</h2>
+        <p style="margin: 0 0 16px; font-size: 15px; color: ${styles.muted};">Your appointment has been <strong style="color: #10b981;">confirmed</strong>!</p>
+        ${card(`
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="padding: 6px 0;"><strong>Date:</strong> ${formattedDate}</td></tr>
+                <tr><td style="padding: 6px 0;"><strong>Time:</strong> ${appointmentData.shift}</td></tr>
+                <tr><td style="padding: 6px 0;"><strong>Location:</strong> 123 Health Avenue, Indore</td></tr>
+            </table>
+        `)}
+        <p style="margin: 0; font-size: 14px; color: ${styles.muted};">Please arrive 10-15 minutes early.</p>
+    `;
 
-    const timeDisplay = appointmentData.shiftStart && appointmentData.shiftEnd
-        ? `${appointmentData.shiftStart} - ${appointmentData.shiftEnd}`
-        : (shiftTimes[appointmentData.shift] || '');
-
-    console.log(`Sending confirmation to patient: ${patientEmail}`);
     await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: patientEmail,
         subject: `Appointment Confirmed - ${formattedDate}`,
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: #059669; color: white; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
-                <h2 style="margin: 0;">Appointment Confirmed</h2>
-                <p style="margin: 8px 0 0; opacity: 0.9;">Dr. Rajesh Sharma's Clinic</p>
-            </div>
-            
-            <div style="background: #f9f9f9; padding: 24px; border: 1px solid #e0e0e0; border-top: none;">
-                <p style="font-size: 16px;">Dear ${escapeHtml(appointmentData.name)},</p>
-                <p style="font-size: 14px; color: #666;">Your appointment has been <strong style="color: #059669;">confirmed</strong>. Please find the details below:</p>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e0e0e0;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 100px;">Date</td>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee;">${formattedDate}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold;">Time</td>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee;">
-                                ${appointmentData.shift}<br>
-                                <span style="color: #059669; font-size: 15px; font-weight: 600;">${timeDisplay}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold;">Doctor</td>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee;">Dr. Rajesh Sharma</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px 0; font-weight: bold;">Location</td>
-                            <td style="padding: 10px 0;">123 Health Avenue, Medical District, Indore</td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <div style="background: #fef3c7; padding: 16px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0; font-size: 14px; color: #92400e;">
-                        <strong>Important:</strong> Please arrive 10-15 minutes early for your appointment.
-                    </p>
-                </div>
-                
-                <p style="font-size: 14px; color: #666;">For any queries or to reschedule, call us at:</p>
-                <p style="font-size: 18px; font-weight: bold; color: #111;">${escapeHtml(process.env.CLINIC_PHONE) || '+91 98765 43210'}</p>
-            </div>
-            
-            <div style="background: #111; color: white; padding: 16px; border-radius: 0 0 12px 12px; text-align: center; font-size: 12px;">
-                <p style="margin: 0;">This is an automated confirmation. Please save this email for your reference.</p>
-            </div>
-        </div>
-        `
+        html: emailTemplate(content)
     });
 }
 
 export async function sendAppointmentStatusEmail(appointmentData, patientEmail, status, reason = '') {
     const transporter = createTransporter();
-
     const formattedDate = formatDate(appointmentData.date);
 
-    const shiftTimes = {
-        'Morning (9 AM - 1 PM)': '9:00 AM - 1:00 PM',
-        'Evening (4 PM - 8 PM)': '4:00 PM - 8:00 PM'
+    const statusInfo = {
+        confirmed: { color: '#10b981', title: 'Appointment Confirmed', msg: 'We look forward to seeing you!' },
+        cancelled: { color: '#ef4444', title: 'Appointment Cancelled', msg: reason || 'Please contact us to reschedule.' },
+        completed: { color: '#8b5cf6', title: 'Appointment Completed', msg: 'Thank you for visiting us.' },
+        'no-show': { color: '#f59e0b', title: 'Appointment Missed', msg: 'Please contact us to reschedule.' }
     };
 
-    const timeDisplay = appointmentData.shiftStart && appointmentData.shiftEnd
-        ? `${appointmentData.shiftStart} - ${appointmentData.shiftEnd}`
-        : (shiftTimes[appointmentData.shift] || '');
+    const info = statusInfo[status] || statusInfo.confirmed;
 
-    const statusConfig = {
-        confirmed: {
-            color: '#059669',
-            bgColor: '#ecfdf5',
-            title: 'Appointment Confirmed',
-            message: 'Your appointment has been confirmed. Please find the details below:',
-            icon: '✓'
-        },
-        cancelled: {
-            color: '#dc2626',
-            bgColor: '#fef2f2',
-            title: 'Appointment Cancelled',
-            message: reason ? `Your appointment has been cancelled. Reason: ${escapeHtml(reason)}` : 'Your appointment has been cancelled. Please contact us if you need to reschedule.',
-            icon: '✕'
-        },
-        completed: {
-            color: '#7c3aed',
-            bgColor: '#f5f3ff',
-            title: 'Appointment Completed',
-            message: 'Your appointment has been marked as completed. Thank you for visiting.',
-            icon: '✓'
-        },
-        'no-show': {
-            color: '#f59e0b',
-            bgColor: '#fffbeb',
-            title: 'Appointment Missed',
-            message: 'Your appointment was marked as missed. Please contact us to reschedule.',
-            icon: '!'
-        }
-    };
-
-    const config = statusConfig[status] || statusConfig.confirmed;
+    const content = `
+        <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 600; color: ${styles.dark};">Dear ${appointmentData.name},</h2>
+        <p style="margin: 0 0 16px; font-size: 15px; color: ${styles.muted};"><strong style="color: ${info.color};">${info.title}</strong><br/>${info.msg}</p>
+        ${card(`
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="padding: 6px 0;"><strong>Date:</strong> ${formattedDate}</td></tr>
+                <tr><td style="padding: 6px 0;"><strong>Time:</strong> ${appointmentData.shift}</td></tr>
+            </table>
+        `)}
+        <p style="margin: 0; font-size: 14px; color: ${styles.muted};">For queries, call: ${process.env.CLINIC_PHONE || '+91 98765 43210'}</p>
+    `;
 
     await transporter.sendMail({
         from: process.env.SMTP_USER,
         to: patientEmail,
-        subject: `${config.title} - ${formattedDate}`,
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: ${config.color}; color: white; padding: 20px; border-radius: 12px 12px 0 0; text-align: center;">
-                <h2 style="margin: 0;">${config.title}</h2>
-                <p style="margin: 8px 0 0; opacity: 0.9;">Dr. Rajesh Sharma's Clinic</p>
-            </div>
-            
-            <div style="background: ${config.bgColor}; padding: 24px; border: 1px solid #e0e0e0; border-top: none;">
-                <p style="font-size: 16px;">Dear ${escapeHtml(appointmentData.name)},</p>
-                <p style="font-size: 14px; color: #666;">${config.message}</p>
-                
-                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e0e0e0;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 100px;">Date</td>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee;">${formattedDate}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold;">Time</td>
-                            <td style="padding: 10px 0; border-bottom: 1px solid #eee;">
-                                ${appointmentData.shift}<br>
-                                <span style="color: ${config.color}; font-size: 15px; font-weight: 600;">${timeDisplay}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px 0; font-weight: bold;">Status</td>
-                            <td style="padding: 10px 0;">
-                                <span style="color: ${config.color}; font-weight: 600; text-transform: uppercase;">${status}</span>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                
-                ${status === 'cancelled' ? `
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${getBaseUrl()}/#appointment" style="display: inline-block; background: #536de6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 12px rgba(83,109,230,0.2);">Book New Appointment</a>
-                </div>
-                ` : ''}
-
-                ${status === 'cancelled' || status === 'no-show' ? `
-                <div style="background: #fef3c7; padding: 16px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0; font-size: 14px; color: #92400e;">
-                        Please contact us to reschedule your appointment at your earliest convenience if you haven't booked a new one already.
-                    </p>
-                </div>
-                ` : ''}
-                
-                <p style="font-size: 14px; color: #666;">For any queries, call us at:</p>
-                <p style="font-size: 18px; font-weight: bold; color: #111;">${escapeHtml(process.env.CLINIC_PHONE) || '+91 98765 43210'}</p>
-            </div>
-            
-            <div style="background: #111; color: white; padding: 16px; border-radius: 0 0 12px 12px; text-align: center; font-size: 12px;">
-                <p style="margin: 0;">This is an automated notification. Please save this email for your reference.</p>
-            </div>
-        </div>
-        `
+        subject: `${info.title} - ${formattedDate}`,
+        html: emailTemplate(content)
     });
 }

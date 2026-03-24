@@ -90,7 +90,11 @@ export default function DashboardPage() {
     };
 
     const handleLogout = async () => {
-        await fetch("/api/auth/logout", { method: "POST" });
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+        } catch (e) {
+            // Continue with logout anyway
+        }
         router.push("/login");
     };
 
