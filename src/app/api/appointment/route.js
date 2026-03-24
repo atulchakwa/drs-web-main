@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Appointment from "@/models/Appointment";
-import { sendAppointmentNotificationEmail } from "@/lib/mailer";
+import { sendAppointmentNotificationEmail, sendAppointmentAcknowledgementEmail } from "@/lib/mailer";
 import { authMiddleware } from "@/lib/auth";
 
 const VALID_SHIFTS = {
@@ -324,20 +324,22 @@ export async function POST(req) {
 
         // Send acknowledgment email to patient in background
         if (appointment.email && appointment.email.trim()) {
+            console.log(`Attempting to send acknowledgment email to: ${appointment.email}`);
             (async () => {
                 try {
-                    const { sendAppointmentAcknowledgementEmail } = await import("@/lib/mailer");
                     await sendAppointmentAcknowledgementEmail({
                         name: appointment.name,
                         date: appointment.date,
                         shift: appointment.shift,
                         preferredTime: appointment.preferredTime
                     }, appointment.email);
-                    console.log(`Acknowledgment email sent to patient: ${appointment.email}`);
+                    console.log(`Acknowledgment email sent successfully to: ${appointment.email}`);
                 } catch (ackErr) {
-                    console.error("Failed to send patient acknowledgment email in background:", ackErr);
+                    console.error("Failed to send patient acknowledgment email:", ackErr.message);
                 }
             })();
+        } else {
+            console.log("No patient email provided, skipping acknowledgment email");
         }
 
         return NextResponse.json({

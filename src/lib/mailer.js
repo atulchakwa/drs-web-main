@@ -27,10 +27,15 @@ function createTransporter() {
         port,
         secure: isSecure,
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-        tls: { rejectUnauthorized: false },
-        pool: true,
-        maxConnections: 5,
-        maxMessages: 100
+        tls: { rejectUnauthorized: false }
+    });
+
+    transporter.verify((error) => {
+        if (error) {
+            console.log('SMTP Transporter verification failed:', error.message);
+        } else {
+            console.log('SMTP Transporter is ready');
+        }
     });
 
     return transporter;
