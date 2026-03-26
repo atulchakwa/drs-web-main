@@ -47,7 +47,11 @@ export async function GET(request) {
 
         const appointments = await Appointment.find(query).sort({ date: -1, shift: 1 });
 
+        const statsQuery = {};
+        if (date) statsQuery.date = date;
+        
         const stats = await Appointment.aggregate([
+            { $match: statsQuery },
             { $group: { _id: "$status", count: { $sum: 1 } } }
         ]);
 
@@ -167,7 +171,6 @@ export async function POST(request) {
                         shiftEnd: appointment.shiftEnd
                     }, appointment.email);
                     await Appointment.findByIdAndUpdate(appointment._id, { confirmationEmailSent: true });
-                    console.log(`Confirmation email sent to ${appointment.email}`);
                 } catch (emailErr) {
                     console.error("Failed to send patient confirmation email in background:", emailErr);
                 }
@@ -243,7 +246,6 @@ export async function PATCH(request) {
                     if (status === 'confirmed') {
                         await Appointment.findByIdAndUpdate(id, { confirmationEmailSent: true });
                     }
-                    console.log(`Status update email (${status}) sent to ${appointment.email}`);
                 } catch (emailErr) {
                     console.error(`Failed to send ${status} email in background:`, emailErr);
                 }

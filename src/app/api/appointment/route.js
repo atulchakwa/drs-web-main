@@ -212,7 +212,7 @@ function validateAppointment(data) {
 }
 
 export async function POST(req) {
-    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+    const ip = (req.headers.get('x-forwarded-for') || '127.0.0.1').split(',')[0].trim();
     if (!checkRateLimit(ip)) {
         return NextResponse.json(
             { success: false, error: "Too many requests. Please try again after an hour." },
@@ -243,8 +243,20 @@ export async function POST(req) {
 
         const normalizedPhone = normalizePhone(body.phone);
 
-        // Atomic operation: Check and create in one transaction
-        // Use findOneAndUpdate with upsert: false to atomically check if slot is available
+        // Check for existing appointments that would conflict (sequential to avoid race conditions)
+        const existingByPhone = await Appointment.findOne({
+            phone: normalizedPhone,
+            date: body.date,
+            status: { $nin: ['cancelled', 'completed', 'no-show'] }
+        });
+
+        if (existingByPhone) {
+            return NextResponse.json(
+                { success: false, error: "You already have an active appointment for this date. Please select a different date or call us directly." },
+                { status: 409 }
+            );
+        }
+
         const collisionQuery = {
             date: body.date,
             shift: body.shift,
@@ -255,22 +267,7 @@ export async function POST(req) {
             collisionQuery.preferredTime = body.preferredTime;
         }
 
-        // Check for existing appointments that would conflict
-        const [existingByPhone, existingBySlot] = await Promise.all([
-            Appointment.findOne({
-                phone: normalizedPhone,
-                date: body.date,
-                status: { $nin: ['cancelled', 'completed', 'no-show'] }
-            }),
-            Appointment.findOne(collisionQuery)
-        ]);
-
-        if (existingByPhone) {
-            return NextResponse.json(
-                { success: false, error: "You already have an active appointment for this date. Please select a different date or call us directly." },
-                { status: 409 }
-            );
-        }
+        const existingBySlot = await Appointment.findOne(collisionQuery);
 
         if (existingBySlot) {
             const errorMsg = body.preferredTime
@@ -302,44 +299,38 @@ export async function POST(req) {
             ? `${body.preferredTime} (within ${appointment.shift})`
             : appointment.shift;
 
-        // Send notification email to clinic in background
-        (async () => {
+        // Send notification email to clinic
+        try {
+            await sendAppointmentNotificationEmail({
+                name: appointment.name,
+                phone: appointment.phone,
+                email: appointment.email,
+                date: appointment.date,
+                shift: appointment.shift,
+                preferredTime: appointment.preferredTime,
+                message: appointment.message,
+                appointmentId: appointment._id.toString(),
+                displayTime: displayTime
+            });
+
+        } catch (emailErr) {
+            console.error("Failed to send clinic notification:", emailErr.message);
+        }
+
+        // Send acknowledgment email to patient
+        if (appointment.email && appointment.email.trim()) {
+
             try {
-                await sendAppointmentNotificationEmail({
+                await sendAppointmentAcknowledgementEmail({
                     name: appointment.name,
-                    phone: appointment.phone,
-                    email: appointment.email,
                     date: appointment.date,
                     shift: appointment.shift,
-                    preferredTime: appointment.preferredTime,
-                    message: appointment.message,
-                    appointmentId: appointment._id.toString(),
-                    displayTime: displayTime
-                });
-                console.log(`Notification email sent to clinic for ${appointment._id}`);
-            } catch (emailErr) {
-                console.error("Failed to send clinic notification in background:", emailErr);
-            }
-        })();
+                    preferredTime: appointment.preferredTime
+                }, appointment.email);
 
-        // Send acknowledgment email to patient in background
-        if (appointment.email && appointment.email.trim()) {
-            console.log(`Attempting to send acknowledgment email to: ${appointment.email}`);
-            (async () => {
-                try {
-                    await sendAppointmentAcknowledgementEmail({
-                        name: appointment.name,
-                        date: appointment.date,
-                        shift: appointment.shift,
-                        preferredTime: appointment.preferredTime
-                    }, appointment.email);
-                    console.log(`Acknowledgment email sent successfully to: ${appointment.email}`);
-                } catch (ackErr) {
-                    console.error("Failed to send patient acknowledgment email:", ackErr.message);
-                }
-            })();
-        } else {
-            console.log("No patient email provided, skipping acknowledgment email");
+            } catch (ackErr) {
+                console.error("Failed to send patient acknowledgment email:", ackErr.message);
+            }
         }
 
         return NextResponse.json({

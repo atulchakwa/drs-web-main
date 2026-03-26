@@ -53,10 +53,15 @@ export default function DashboardPage() {
         fetch("/api/auth/me")
             .then(res => res.json())
             .then(data => {
-                if (!data.authenticated) router.push("/login");
-                else setUser(data.user);
+                if (!data.authenticated) {
+                    router.push("/login");
+                } else {
+                    setUser(data.user);
+                }
             })
-            .catch(() => router.push("/login"));
+            .catch(() => {
+                setLoading(false);
+            });
     }, [router]);
 
     const fetchAppointments = useCallback(async () => {
